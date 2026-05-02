@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -24,6 +23,8 @@ model users {
   id          String @id @default(uuid()) @map("id")
 
   tgChatId    String? @unique @map("tg_chat_id")
+  tgUserName  String? @unique @map("tg_user_name")
+  password    String
 
   profile     profiles?
   news        news[]

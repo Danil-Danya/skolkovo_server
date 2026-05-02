@@ -1,0 +1,70 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsUUID } from "class-validator";
+
+export class LoginFromTelegramDTO {
+    @ApiProperty({
+        example: "encrypted_telegram_payload",
+        description: "Зашифрованная строка авторизации Telegram"
+    })
+    @IsString()
+    auth: string;
+}
+
+export class TokenDTO {
+    @ApiProperty({
+        example: "jwt_token",
+        description: "JWT токен"
+    })
+    @IsString()
+    token: string;
+
+    @ApiProperty({
+        example: 1746100000,
+        description: "Unix timestamp времени истечения токена"
+    })
+    expiriesAt: number;
+}
+
+export class TokenAnswerDTO {
+    @ApiProperty({ type: TokenDTO })
+    accessToken: TokenDTO;
+
+    @ApiProperty({ type: TokenDTO })
+    refreshToken: TokenDTO;
+}
+
+export class JWTUserPayloadDTO {
+    @ApiProperty({
+        example: "550e8400-e29b-41d4-a716-446655440000",
+        description: "Идентификатор пользователя"
+    })
+    @IsUUID("4")
+    id: string;
+}
+
+export class JWTAccessPayloadDTO extends JWTUserPayloadDTO {
+    @ApiProperty({
+        example: "access",
+        description: "Тип access токена"
+    })
+    @IsString()
+    tokenType: string;
+}
+
+export class RefreshPayloadDTO extends JWTUserPayloadDTO {
+    @ApiProperty({
+        example: "refresh",
+        description: "Тип refresh токена"
+    })
+    @IsString()
+    tokenType: string;
+}
+
+export class RefreshRequestUserDTO {
+    @ApiProperty({
+        example: "550e8400-e29b-41d4-a716-446655440000",
+        description: "Идентификатор пользователя"
+    })
+    @IsUUID("4")
+    id: string;
+}
