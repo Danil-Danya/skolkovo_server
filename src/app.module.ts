@@ -6,6 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './modules/entities/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileModule } from './modules/entities/profiles/profile.module';
+import { NewsModule } from './modules/entities/news/news.module';
+import { EventModule } from './modules/entities/events/events.module';
+import { EventRegistrationsModule } from './modules/entities/events_registrations/event_registrations.module';
+import { LocationsModule } from './modules/entities/locations/locations.module';
 
 @Module({
     imports: [
@@ -15,7 +19,11 @@ import { ProfileModule } from './modules/entities/profiles/profile.module';
         PrismaModule,
         AuthModule,
         UserModule,
-        ProfileModule
+        ProfileModule,
+        NewsModule,
+        EventModule,
+        EventRegistrationsModule,
+        LocationsModule
     ],
 })
 export class AppModule {}

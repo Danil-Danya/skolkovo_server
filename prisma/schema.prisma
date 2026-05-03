@@ -127,7 +127,7 @@ model events {
   description  Json   @map("description")
   maxUnits     Int    @map("max_units")
   status       String @map("status")
-  views        String @map("views")
+  views        Int @map("views")
 
   price        Int?   @map("price")
   discount     Int?   @map("discount")

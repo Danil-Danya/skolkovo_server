@@ -20,7 +20,6 @@ const normalizeFolder = (folder: string): string => {
     return normalizedFolder || "files";
 }
 
-
 const saveFileToStatic = async (file: UploadedFile, folder: string): Promise<UploadedStaticFile> => {
     const staticFolder = normalizeFolder(folder);
     const destination = join(process.cwd(), "static", staticFolder);
