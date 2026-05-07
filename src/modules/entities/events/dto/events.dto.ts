@@ -1,6 +1,29 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { plainToInstance, Transform, Type } from "class-transformer";
 import { IsArray, IsDate, IsInt, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator";
+
+const parseJsonString = (value: unknown): unknown => {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    }
+    catch {
+        return value;
+    }
+}
+
+const parseEventDescription = (value: unknown): unknown => {
+    const parsedValue = parseJsonString(value);
+
+    if (!Array.isArray(parsedValue)) {
+        return parsedValue;
+    }
+
+    return parsedValue.map((item) => plainToInstance(EventDescriptionDTO, item));
+}
 
 export class EventDescriptionDTO {
     @ApiPropertyOptional({
@@ -29,7 +52,7 @@ export class EventDescriptionDTO {
     list?: string[];
 
     @ApiPropertyOptional({
-        example: "/uploads/events/image.jpg",
+        example: "/static/events/image.webp",
         description: "Путь к изображению блока"
     })
     @IsOptional()
@@ -59,17 +82,26 @@ export class CreateEventDTO {
     @IsString()
     title: string;
 
+    @ApiPropertyOptional({
+        example: "/static/events/preview.webp",
+        description: "Путь к превью мероприятия"
+    })
+    @IsOptional()
+    @IsString()
+    previewPath?: string;
+
     @ApiProperty({
         example: [
             {
                 subtitle: "Подзаголовок мероприятия",
                 text: "Описание мероприятия",
                 list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/events/image.jpg"
+                imagePath: "/static/events/image.webp"
             }
         ],
         description: "Описание мероприятия"
     })
+    @Transform(({ value }) => parseEventDescription(value), { toClassOnly: true })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => EventDescriptionDTO)
@@ -79,6 +111,7 @@ export class CreateEventDTO {
         example: 100,
         description: "Максимальное количество мест"
     })
+    @Type(() => Number)
     @IsInt()
     maxUnits: number;
 
@@ -94,8 +127,9 @@ export class CreateEventDTO {
         description: "Количество просмотров"
     })
     @IsOptional()
+    @Type(() => Number)
     @IsNumber()
-    views: number;
+    views?: number;
 
     @ApiPropertyOptional({
         example: 100000,
@@ -103,6 +137,7 @@ export class CreateEventDTO {
         nullable: true
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     price?: number | null;
 
@@ -112,6 +147,7 @@ export class CreateEventDTO {
         nullable: true
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     discount?: number | null;
 
@@ -130,6 +166,15 @@ export class CreateEventDTO {
     @Type(() => Date)
     @IsDate()
     endTime: Date;
+}
+
+export class CreateEventWithPreviewDTO extends CreateEventDTO {
+    @ApiPropertyOptional({
+        type: "string",
+        format: "binary"
+    })
+    @IsOptional()
+    preview?: string;
 }
 
 export class UpdateEventDTO {
@@ -158,17 +203,26 @@ export class UpdateEventDTO {
     title?: string;
 
     @ApiPropertyOptional({
+        example: "/static/events/preview.webp",
+        description: "Путь к превью мероприятия"
+    })
+    @IsOptional()
+    @IsString()
+    previewPath?: string;
+
+    @ApiPropertyOptional({
         example: [
             {
                 subtitle: "Подзаголовок мероприятия",
                 text: "Описание мероприятия",
                 list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/events/image.jpg"
+                imagePath: "/static/events/image.webp"
             }
         ],
         description: "Описание мероприятия"
     })
     @IsOptional()
+    @Transform(({ value }) => parseEventDescription(value), { toClassOnly: true })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => EventDescriptionDTO)
@@ -179,6 +233,7 @@ export class UpdateEventDTO {
         description: "Максимальное количество мест"
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     maxUnits?: number;
 
@@ -191,12 +246,13 @@ export class UpdateEventDTO {
     status?: string;
 
     @ApiPropertyOptional({
-        example: "0",
+        example: 0,
         description: "Количество просмотров"
     })
     @IsOptional()
+    @Type(() => Number)
     @IsNumber()
-    views: number;
+    views?: number;
 
     @ApiPropertyOptional({
         example: 100000,
@@ -204,6 +260,7 @@ export class UpdateEventDTO {
         nullable: true
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     price?: number | null;
 
@@ -213,6 +270,7 @@ export class UpdateEventDTO {
         nullable: true
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     discount?: number | null;
 
@@ -264,13 +322,21 @@ export class EventAnswerDTO {
     @IsString()
     title: string;
 
+    @ApiPropertyOptional({
+        example: "/static/events/preview.webp",
+        description: "Путь к превью мероприятия"
+    })
+    @IsOptional()
+    @IsString()
+    previewPath?: string | null;
+
     @ApiProperty({
         example: [
             {
                 subtitle: "Подзаголовок мероприятия",
                 text: "Описание мероприятия",
                 list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/events/image.jpg"
+                imagePath: "/static/events/image.webp"
             }
         ],
         description: "Описание мероприятия"
@@ -292,7 +358,7 @@ export class EventAnswerDTO {
     status: string;
 
     @ApiProperty({
-        example: "0",
+        example: 0,
         description: "Количество просмотров"
     })
     @IsNumber()
@@ -354,6 +420,7 @@ export class EventDTO {
     authorId: string;
     locationId: string;
     title: string;
+    previewPath?: string | null;
     description: EventDescriptionDTO[];
     maxUnits: number;
     status: string;

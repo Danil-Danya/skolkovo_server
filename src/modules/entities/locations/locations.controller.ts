@@ -11,7 +11,7 @@ export class LocationsController {
     constructor (private locationService: LocationsService) {}
 
     @Post()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Создать локацию" })
     @ApiOkResponse({ type: LocationAnswerDTO })
@@ -21,7 +21,7 @@ export class LocationsController {
     }
 
     @Put(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Обновить локацию" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
@@ -32,7 +32,7 @@ export class LocationsController {
     }
 
     @Delete(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Удалить локацию" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
@@ -43,7 +43,7 @@ export class LocationsController {
     }
 
     @Get(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить локацию по id" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
@@ -54,7 +54,7 @@ export class LocationsController {
     }
 
     @Get()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить список локаций" })
     @ApiOkResponse({ type: LocationDTO, isArray: true })

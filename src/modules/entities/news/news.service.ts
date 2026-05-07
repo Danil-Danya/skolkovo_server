@@ -9,7 +9,21 @@ import { findAndPaginate } from "src/core/utils/model_metadata.util";
 export class NewsService {
     constructor (private prisma: PrismaService) {}
 
+    private async ensureAuthorExists (authorId: string): Promise<void> {
+        const author = await this.prisma.users.findUnique({
+            where: {
+                id: authorId
+            }
+        });
+
+        if (!author) {
+            throw new NotFoundException("Автор новости не найден");
+        }
+    }
+
     async createNews (data: CreateNewsDTO): Promise<NewsAnswerDTO> {
+        await this.ensureAuthorExists(data.authorId);
+
         const createdNews = await this.prisma.news.create({ 
             data: {
                 ...data,
@@ -34,6 +48,10 @@ export class NewsService {
 
         if (!newsExist) {
             throw new NotFoundException('Не удалось найти данную новость');
+        }
+
+        if (data.authorId) {
+            await this.ensureAuthorExists(data.authorId);
         }
 
         const updatedNews = await this.prisma.news.update({
@@ -111,6 +129,18 @@ export class NewsService {
         const news = await this.prisma.news.findUnique({
             where: {
                 id
+            },
+            include: {
+                author: {
+                    select: {
+                        profile: {
+                            select: {
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                }
             }
         }) as NewsAnswerDTO;
 

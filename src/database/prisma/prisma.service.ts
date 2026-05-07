@@ -1,19 +1,37 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_USER = process.env.DB_SERVERNAME;
-const DB_HOST = process.env.DB_HOST;
-const DB_PORT = process.env.DB_PORT;
-const DB_NAME = process.env.DB_NAME;
+const getRequiredEnv = (name: string): string => {
+    const value = process.env[name];
 
-const databaseUrl = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+    if (typeof value !== "string" || value.length === 0) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+
+    return value;
+}
+
+const getDatabaseConfig = () => {
+    const port = Number(getRequiredEnv("DB_PORT"));
+
+    if (Number.isNaN(port)) {
+        throw new Error("DB_PORT must be a valid number");
+    }
+
+    return {
+        host: getRequiredEnv("DB_HOST"),
+        port,
+        user: getRequiredEnv("DB_SERVERNAME"),
+        password: getRequiredEnv("DB_PASSWORD"),
+        database: getRequiredEnv("DB_NAME")
+    };
+}
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     constructor() {
-        const adapter = new PrismaPg({ database: databaseUrl  });
+        const adapter = new PrismaPg(getDatabaseConfig());
         super({ adapter });
     }
 

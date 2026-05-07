@@ -25,29 +25,34 @@ export class CreateProfileDTO {
     @IsString()
     lastName: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    gender: string;
+    gender?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    biography: string;
+    biography?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    region: string;
+    region?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    tgUser: string;
+    tgUser?: string | null;
 
     @ApiProperty()
     @IsString()
     phone: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    avatarPath: string;
+    avatarPath?: string | null;
 }
 
 export class UpdateProfileDTO {
@@ -74,22 +79,22 @@ export class UpdateProfileDTO {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    gender?: string;
+    gender?: string | null;
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    biography?: string;
+    biography?: string | null;
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    region?: string;
+    region?: string | null;
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    tgUser?: string;
+    tgUser?: string | null;
 
     @ApiPropertyOptional()
     @IsOptional()
@@ -99,7 +104,7 @@ export class UpdateProfileDTO {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    avatarPath?: string;
+    avatarPath?: string | null;
 }
 
 export class CreateProfileWithAvatarDTO extends OmitType(CreateProfileDTO, ["avatarPath"] as const) {
@@ -152,29 +157,34 @@ export class ProfileAnswerDTO {
     @IsString()
     lastName: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    gender: string;
+    gender?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    biography: string;
+    biography?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    region: string;
+    region?: string | null;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    tgUser: string;
+    tgUser?: string | null;
 
     @ApiProperty()
     @IsString()
     phone: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ nullable: true })
+    @IsOptional()
     @IsString()
-    avatarPath: string;
+    avatarPath?: string | null;
 
     @ApiProperty()
     @Type(() => Date)
@@ -194,12 +204,12 @@ export class ProfileDTO {
     positionId?: string | null;
     firstName: string;
     lastName: string;
-    gender: string;
-    biography: string;
-    region: string;
-    tgUser: string;
+    gender?: string | null;
+    biography?: string | null;
+    region?: string | null;
+    tgUser?: string | null;
     phone: string;
-    avatarPath: string;
+    avatarPath?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -1,22 +1,32 @@
+import bcrypt from "bcrypt";
+
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { CreateUserDTO, UpdateUserDTO, UserAnswerDTO } from "./dto/users.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
+import { USER_SELECT } from "./types/user.types";
 
 @Injectable()
 export class UsersService {
     constructor (private prisma: PrismaService) {}
 
     async createUser (data: CreateUserDTO): Promise<UserAnswerDTO> {
-        const userExist = await this.prisma.users.findUnique({ 
-            where: { 
-                tgChatId: data.tgChatId 
-            } 
-        });
+        if (data.tgChatId) {
+            const userExist = await this.prisma.users.findUnique({ 
+                where: { 
+                    tgChatId: data.tgChatId 
+                } 
+            });
 
-        if (userExist) {
-            throw new BadRequestException('Данный пользователь уже сущестует');
+            if (userExist) {
+                throw new BadRequestException('Данный пользователь уже сущестует');
+            }
+        }
+
+        if (data.password) {
+            const hashedPassword = await bcrypt.hash(data.password, Number(process.env.SALT_ROUNDS));
+            data.password = hashedPassword;
         }
 
         const createdUser = await this.prisma.users.create({
@@ -36,7 +46,8 @@ export class UsersService {
         const userExist = await this.prisma.users.findUnique({ 
             where: { 
                 id
-            } 
+            },
+            select: USER_SELECT,
         });
 
         if (!userExist) {
@@ -58,7 +69,8 @@ export class UsersService {
         const user = await this.prisma.users.findUnique({ 
             where: { 
                 id
-            } 
+            },
+            select: USER_SELECT
         });
 
         if (!user) {
@@ -72,7 +84,38 @@ export class UsersService {
         const user = await this.prisma.users.findUnique({ 
             where: { 
                 tgChatId: chatId
-            } 
+            },
+            select: {
+                id: true,
+                tgChatId: true,
+                tgUserName: true,
+                createdAt: true,
+                updatedAt: true
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Данный пользователь не был найден');
+        }
+
+        return user;
+    }
+
+    async getOneUserByUsername (tgUserName: string): Promise<UserAnswerDTO> {
+        const normalizedUsername = tgUserName?.trim().replace(/^@+/, "");
+
+        if (!normalizedUsername) {
+            throw new BadRequestException("Не передан tgUserName");
+        }
+
+        const user = await this.prisma.users.findFirst({ 
+            where: { 
+                tgUserName: {
+                    equals: normalizedUsername,
+                    mode: "insensitive"
+                }
+            },
+            select: USER_SELECT
         });
 
         if (!user) {
@@ -104,20 +147,12 @@ export class UsersService {
             order = { [filters.orderBy]: filters.order };
         }
 
-        const skip = (page - 1) * limit;
-
         const users = await findAndPaginate(this.prisma.users, {
             where: whereClause,
             orderBy: order,
             page,
             limit,
-            select: {
-                id: true,
-                tgChatId: true,
-                tgUserName: true,
-                createdAt: true,
-                updatedAt: true
-            }
+            select: USER_SELECT,
         });
 
         return users;
@@ -132,6 +167,11 @@ export class UsersService {
 
         if (!userExist) {
             throw new NotFoundException('Данный пользователь не был найден');
+        }
+
+        if (data.password) {
+            const hashedPassword = await bcrypt.hash(data.password, Number(process.env.SALT_ROUNDS));
+            data.password = hashedPassword;
         }
 
         const updatedUser = await this.prisma.users.update({

@@ -19,7 +19,7 @@ export class ProfileController {
     constructor (private profileService: ProfileService) {}
 
     @Post()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @UploadFile('avatar', 'avatars')
     @ApiConsumes('multipart/form-data')
@@ -40,18 +40,18 @@ export class ProfileController {
     }
 
     @Get(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить профиль по id" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
     @ApiOkResponse({ type: ProfileAnswerDTO })
-    private async getById (@Param() id: string): Promise<ProfileAnswerDTO> {
+    private async getById (@Param("id") id: string): Promise<ProfileAnswerDTO> {
         const profile = await this.profileService.getProfileById(id);
         return profile;
     }
 
     @Put(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @UploadFile('avatar', 'avatars')
     @ApiConsumes('multipart/form-data')
@@ -60,7 +60,7 @@ export class ProfileController {
     @ApiBody({ type: UpdateProfileWithAvatarDTO })
     @ApiOkResponse({ type: ProfileAnswerDTO })
     private async update (
-        @Param() id: string, 
+        @Param("id") id: string, 
         @Body() data: UpdateProfileWithAvatarDTO, 
         @UploadedFile() avatar?: UploadedStaticFile
     ): Promise<ProfileAnswerDTO> {
@@ -74,12 +74,12 @@ export class ProfileController {
     }
 
     @Delete(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Удалить профиль" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
     @ApiOkResponse({ type: DeletedMessageDTO })
-    private async delete (@Param() id: string): Promise<DeletedMessageDTO> {
+    private async delete (@Param("id") id: string): Promise<DeletedMessageDTO> {
         const deletedProfile = await this.profileService.deleteProfile(id);
         return deletedProfile;
     }

@@ -1,8 +1,15 @@
+import bcrypt from "bcrypt";
 import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { UserDTO } from "../entities/users/dto/users.dto";
-import { JWTUserPayloadDTO, TokenAnswerDTO } from "./jwt/jwt.dto";
+import { USER_SELECT } from "../entities/users/types/user.types";
+import {
+    JWTUserPayloadDTO,
+    TelegramBotRegisterAnswerDTO,
+    TelegramBotRegisterDTO,
+    TokenAnswerDTO
+} from "./jwt/jwt.dto";
 import { decryptTelegramAuthPayload } from "./utils/decriptASE.utils";
 
 @Injectable()
@@ -12,13 +19,34 @@ export class AuthService {
         private jwt: JwtService
     ) {}
 
+    private normalizeTelegramUsername (username?: string | null): string | null {
+        if (!username) {
+            return null;
+        }
+
+        const normalizedUsername = username.trim().replace(/^@+/, "");
+        return normalizedUsername.length > 0 ? normalizedUsername : null;
+    }
+
+    async applyAccount (id: string) {
+        const accountExist = await this.prisma.users.findUnique({
+            where: {
+                id
+            }
+        });
+
+        if (!accountExist) {
+
+        }
+    }
+
     async generateJWTTokens (payload: JWTUserPayloadDTO): Promise<TokenAnswerDTO> {
         const accessTokenExpiresIn = 60 * 60 * 24;
         const refreshTokenExpiresIn = 60 * 60 * 24 * 14;
 
         const accessToken = this.jwt.sign({
             ...payload,
-            tokenType: 'access'
+            tokenType: "access"
         }, {
             secret: process.env.JWT_ACCESS_SECRET_KEY,
             expiresIn: accessTokenExpiresIn
@@ -26,7 +54,7 @@ export class AuthService {
 
         const refreshToken = this.jwt.sign({
             ...payload,
-            tokenType: 'refresh'
+            tokenType: "refresh"
         }, {
             secret: process.env.JWT_REFRESH_SECRET_KEY,
             expiresIn: refreshTokenExpiresIn
@@ -46,16 +74,43 @@ export class AuthService {
         };
     }
 
-    async loginFromWeb () {
+    async loginAdmin (tgUserName: string, password: string): Promise<TokenAnswerDTO> {
+        const normalizedUsername = this.normalizeTelegramUsername(tgUserName);
 
+        if (!normalizedUsername) {
+            throw new UnauthorizedException("Неверный username или пароль");
+        }
+
+        const user = await this.prisma.users.findFirst({
+            where: {
+                tgUserName: {
+                    equals: normalizedUsername,
+                    mode: "insensitive"
+                }
+            }
+        });
+
+        if (!user || !user.password) {
+            throw new UnauthorizedException("Неверный username или пароль");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new UnauthorizedException("Неверный username или пароль");
+        }
+
+        return await this.generateJWTTokens({ id: user.id });
     }
 
     async loginFromTelegram (auth: string): Promise<TokenAnswerDTO> {
         const payload = decryptTelegramAuthPayload(auth);
 
         if (!payload.tgChatId) {
-            throw new UnauthorizedException('chatId из телеграм не был извлечен');
+            throw new UnauthorizedException("chatId из telegram не был извлечен");
         }
+
+        const normalizedUsername = this.normalizeTelegramUsername(payload.tgUserName);
 
         let user = await this.prisma.users.findUnique({
             where: {
@@ -67,8 +122,18 @@ export class AuthService {
             user = await this.prisma.users.create({
                 data: {
                     tgChatId: payload.tgChatId,
-                    tgUserName: payload.tgUserName,
-                    password: ''
+                    tgUserName: normalizedUsername,
+                    password: ""
+                }
+            });
+        }
+        else if (normalizedUsername && user.tgUserName !== normalizedUsername) {
+            user = await this.prisma.users.update({
+                where: {
+                    id: user.id
+                },
+                data: {
+                    tgUserName: normalizedUsername
                 }
             });
         }
@@ -77,23 +142,96 @@ export class AuthService {
         return JWTTokens;
     }
 
+    async registerTelegramBot (data: TelegramBotRegisterDTO): Promise<TelegramBotRegisterAnswerDTO> {
+        const normalizedUsername = this.normalizeTelegramUsername(data.username);
+
+        return await this.prisma.$transaction(async (tx) => {
+            let isNewUser = false;
+            let isNewProfile = false;
+
+            let user = await tx.users.findUnique({
+                where: {
+                    tgChatId: data.chatId
+                }
+            });
+
+            if (!user) {
+                user = await tx.users.create({
+                    data: {
+                        tgChatId: data.chatId,
+                        tgUserName: normalizedUsername,
+                        password: ""
+                    }
+                });
+                isNewUser = true;
+            }
+            else if (normalizedUsername && user.tgUserName !== normalizedUsername) {
+                user = await tx.users.update({
+                    where: {
+                        id: user.id
+                    },
+                    data: {
+                        tgUserName: normalizedUsername
+                    }
+                });
+            }
+
+            let profile = await tx.profiles.findUnique({
+                where: {
+                    userId: user.id
+                }
+            });
+
+            if (!profile) {
+                profile = await tx.profiles.create({
+                    data: {
+                        userId: user.id,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        phone: data.phone,
+                        tgUser: normalizedUsername ?? undefined
+                    }
+                });
+                isNewProfile = true;
+            }
+            else {
+                profile = await tx.profiles.update({
+                    where: {
+                        id: profile.id
+                    },
+                    data: {
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        phone: data.phone,
+                        tgUser: normalizedUsername ?? profile.tgUser
+                    }
+                });
+            }
+
+            return {
+                userId: user.id,
+                profileId: profile.id,
+                chatId: user.tgChatId ?? data.chatId,
+                username: user.tgUserName ?? profile.tgUser ?? null,
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                phone: profile.phone,
+                isNewUser,
+                isNewProfile
+            };
+        });
+    }
+
     async getMe (user: UserDTO) {
         const fullProfile = await this.prisma.users.findUnique({
             where: {
                 id: user.id
             },
-            include: {
-                profile: true,
-                roles: {
-                    include: {
-                        role: true
-                    }
-                }
-            }
+            select: USER_SELECT
         });
 
         if (!fullProfile) {
-            throw new NotFoundException('Ваш профиль вероятно был удален');
+            throw new NotFoundException("Ваш профиль вероятно был удален");
         }
 
         return fullProfile;

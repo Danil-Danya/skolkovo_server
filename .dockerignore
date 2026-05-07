@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.vscode
+coverage
+static
+npm-debug.log
+yarn-error.log
+*.log

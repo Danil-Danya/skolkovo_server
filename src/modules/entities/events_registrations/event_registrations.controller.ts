@@ -10,7 +10,7 @@ export class EventRegistrationsController {
     constructor (private eventRegistrationService: EventRegistrationsService) {}
 
     @Post()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Зарегистрировать пользователя на событие" })
     @ApiOkResponse({ type: EventRegistrationAnswerDTO })
@@ -19,7 +19,7 @@ export class EventRegistrationsController {
         return register;
     }
 
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Одобрить администрацией регистрацию на событие" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
@@ -30,7 +30,7 @@ export class EventRegistrationsController {
         return apply;
     }
 
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Отменить администрацией регистрацию на событие" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
@@ -41,7 +41,7 @@ export class EventRegistrationsController {
         return cancel;
     }
 
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Поставить необходимый статус для необычного кейса пользователя на событие" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })

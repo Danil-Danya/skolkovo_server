@@ -8,9 +8,24 @@ export class ProfileService {
     constructor (private prisma: PrismaService) {}
 
     async createProfile (data: CreateProfileDTO): Promise<ProfileAnswerDTO> {
-        const createdProfile = await this.prisma.profiles.create({ data });
+        const createdProfile = await this.prisma.profiles.create({
+            data: {
+                userId: data.userId,
+                companyId: data.companyId,
+                positionId: data.positionId,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                gender: data.gender,
+                biography: data.biography,
+                region: data.region,
+                tgUser: data.tgUser,
+                phone: data.phone,
+                avatarPath: data.avatarPath
+            }
+        });
+
         if (!createdProfile) {
-            throw new InternalServerErrorException('Не получилось создать профиль');
+            throw new InternalServerErrorException("Не получилось создать профиль");
         }
 
         return createdProfile;
@@ -24,7 +39,7 @@ export class ProfileService {
         });
 
         if (!profile) {
-            throw new NotFoundException('Профиль не был найден');
+            throw new NotFoundException("Профиль не был найден");
         }
 
         return profile;
@@ -38,18 +53,29 @@ export class ProfileService {
         });
 
         if (!profile) {
-            throw new NotFoundException('Профиль не был найден');
+            throw new NotFoundException("Профиль не был найден");
         }
 
         const updatedProfile = await this.prisma.profiles.update({
             where: {
                 id
             },
-            data
+            data: {
+                companyId: data.companyId,
+                positionId: data.positionId,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                gender: data.gender,
+                biography: data.biography,
+                region: data.region,
+                tgUser: data.tgUser,
+                phone: data.phone,
+                avatarPath: data.avatarPath
+            }
         });
 
         if (!updatedProfile) {
-            throw new InternalServerErrorException('Не получилось обновить профиль');
+            throw new InternalServerErrorException("Не получилось обновить профиль");
         }
 
         return updatedProfile;
@@ -63,7 +89,7 @@ export class ProfileService {
         });
 
         if (!profile) {
-            throw new NotFoundException('Профиль не был найден');
+            throw new NotFoundException("Профиль не был найден");
         }
 
         await this.prisma.profiles.delete({
@@ -73,7 +99,7 @@ export class ProfileService {
         });
 
         return {
-            message: 'Профиль был успешно удален'
-        }
+            message: "Профиль был успешно удален"
+        };
     }
 }

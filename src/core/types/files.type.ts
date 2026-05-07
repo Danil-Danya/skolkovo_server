@@ -13,3 +13,7 @@ export type UploadedStaticFile = UploadedFile & {
     url: string;
     textContent?: string;
 };
+
+export type UploadedFilesMap = Record<string, UploadedFile[]>;
+
+export type UploadedStaticFilesMap = Record<string, UploadedStaticFile[]>;

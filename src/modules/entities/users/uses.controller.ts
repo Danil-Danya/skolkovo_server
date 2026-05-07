@@ -11,7 +11,7 @@ export class UsersController {
     constructor (private usersService: UsersService) {}
 
     @Post()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Создать пользователя" })
     @ApiOkResponse({ type: UserAnswerDTO })
@@ -21,18 +21,18 @@ export class UsersController {
     }
 
     @Delete(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Удалить пользователя" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
     @ApiOkResponse({ type: DeletedMessageDTO })
-    private async delete (@Param() id: string): Promise<DeletedMessageDTO> {
+    private async delete (@Param("id") id: string): Promise<DeletedMessageDTO> {
         const deletedMessage = await this.usersService.deleteUser(id);
         return deletedMessage;
     }
 
     @Get()
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить список пользователей" })
     @ApiOkResponse({ type: UserDTO, isArray: true })
@@ -55,23 +55,34 @@ export class UsersController {
     }
 
     @Get(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить пользователя по id" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
     @ApiOkResponse({ type: UserAnswerDTO })
-    private async getOneById (@Param() id: string) {
+    private async getOneById (@Param("id") id: string) {
         const user = await this.usersService.getOneUserById(id);
         return user;
     }
 
+    @Get('/user/:tgUserName')
+    //@Auth()
+    @ApiBearerAuth()
+    @ApiOperation({ summary: "Получить пользователя по chatId" })
+    @ApiParam({ name: "tgUserName", example: "admin" })
+    @ApiOkResponse({ type: UserAnswerDTO })
+    private async getOneByUsername (@Param("tgUserName") tgUserName: string) {
+        const user = await this.usersService.getOneUserByUsername(tgUserName);
+        return user;
+    }
+
     @Put(':id')
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Обновить пользователя" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })
     @ApiOkResponse({ type: UserAnswerDTO })
-    private async update (@Param() id: string, @Body() user: UpdateUserDTO): Promise<UserAnswerDTO> {
+    private async update (@Param("id") id: string, @Body() user: UpdateUserDTO): Promise<UserAnswerDTO> {
         const updatedUser = await this.usersService.updateUser(id, user);
         return updatedUser;
     }

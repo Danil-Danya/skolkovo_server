@@ -80,6 +80,27 @@ export class EventService {
         const event = await this.prisma.events.findUnique({
             where: {
                 id
+            },
+            include: {
+                author: {
+                    select: {
+                        profile: {
+                            select: {
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                },
+                location: {
+                    select: {
+                        name: true,
+                        address: true,
+                        lat: true,
+                        long: true,
+                        yandexLink: true
+                    }
+                }
             }
         }) as EventAnswerDTO;
 
@@ -112,9 +133,22 @@ export class EventService {
             order = { [filters.orderBy]: filters.order };
         }
 
+        const include = {
+            location: {
+                select: {
+                    name: true,
+                    address: true,
+                    lat: true,
+                    long: true,
+                    yandexLink: true
+                }
+            }
+        }
+
         const news = await findAndPaginate(this.prisma.events, {
             where: whereClause,
             orderBy: order,
+            include,
             page,
             limit
         });

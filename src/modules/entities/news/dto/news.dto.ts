@@ -1,27 +1,50 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional, OmitType } from "@nestjs/swagger";
+import { plainToInstance, Transform, Type } from "class-transformer";
 import { IsArray, IsDate, IsInt, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator";
+
+const parseJsonString = (value: unknown): unknown => {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    }
+    catch {
+        return value;
+    }
+}
+
+const parseNewsContent = (value: unknown): unknown => {
+    const parsedValue = parseJsonString(value);
+
+    if (!Array.isArray(parsedValue)) {
+        return parsedValue;
+    }
+
+    return parsedValue.map((item) => plainToInstance(NewsContentDTO, item));
+}
 
 export class NewsContentDTO {
     @ApiPropertyOptional({
-        example: "Подзаголовок статьи",
-        description: "Подзаголовок блока"
+        example: "News block subtitle",
+        description: "Optional subtitle for a content block"
     })
     @IsOptional()
     @IsString()
     subtitle?: string;
 
     @ApiPropertyOptional({
-        example: "Текст статьи",
-        description: "Текст блока"
+        example: "News block text",
+        description: "Optional text for a content block"
     })
     @IsOptional()
     @IsString()
     text?: string;
 
     @ApiPropertyOptional({
-        example: ["Первый пункт", "Второй пункт"],
-        description: "Список блока"
+        example: ["First point", "Second point"],
+        description: "Optional list for a content block"
     })
     @IsOptional()
     @IsArray()
@@ -29,8 +52,8 @@ export class NewsContentDTO {
     list?: string[];
 
     @ApiPropertyOptional({
-        example: "/uploads/news/content-image.jpg",
-        description: "Путь к изображению блока"
+        example: "/static/news/content-image.webp",
+        description: "Image path for a content block"
     })
     @IsOptional()
     @IsString()
@@ -40,21 +63,21 @@ export class NewsContentDTO {
 export class CreateNewsDTO {
     @ApiProperty({
         example: "550e8400-e29b-41d4-a716-446655440000",
-        description: "ID автора новости"
+        description: "News author id"
     })
     @IsUUID("4")
     authorId: string;
 
     @ApiProperty({
-        example: "Заголовок новости",
-        description: "Название новости"
+        example: "News title",
+        description: "News title"
     })
     @IsString()
     title: string;
 
     @ApiProperty({
-        example: "/uploads/news/preview.jpg",
-        description: "Путь к превью изображению"
+        example: "/static/news/preview.webp",
+        description: "Preview image path"
     })
     @IsString()
     previewPath: string;
@@ -62,14 +85,15 @@ export class CreateNewsDTO {
     @ApiProperty({
         example: [
             {
-                subtitle: "Подзаголовок статьи",
-                text: "Текст статьи",
-                list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/news/content-image.jpg"
+                subtitle: "Block subtitle",
+                text: "Block text",
+                list: ["First point", "Second point"],
+                imagePath: "/static/news/content-image.webp"
             }
         ],
-        description: "Контент новости"
+        description: "News content blocks"
     })
+    @Transform(({ value }) => parseNewsContent(value), { toClassOnly: true })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => NewsContentDTO)
@@ -77,40 +101,51 @@ export class CreateNewsDTO {
 
     @ApiPropertyOptional({
         example: 0,
-        description: "Количество просмотров"
+        description: "Views counter"
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     views?: number;
 
     @ApiProperty({
-        example: "Краткое описание новости",
-        description: "Короткое описание"
+        example: "Short description",
+        description: "Short description"
     })
     @IsString()
     shortDescription: string;
 }
 
+export class CreateNewsWithFilesDTO extends OmitType(CreateNewsDTO, ["previewPath"] as const) {
+    @ApiPropertyOptional({
+        example: "/static/news/existing-preview.webp",
+        description: "Existing preview image path"
+    })
+    @IsOptional()
+    @IsString()
+    previewPath?: string;
+}
+
 export class UpdateNewsDTO {
     @ApiPropertyOptional({
         example: "550e8400-e29b-41d4-a716-446655440000",
-        description: "ID автора новости"
+        description: "News author id"
     })
     @IsOptional()
     @IsUUID("4")
     authorId?: string;
 
     @ApiPropertyOptional({
-        example: "Заголовок новости",
-        description: "Название новости"
+        example: "Updated news title",
+        description: "News title"
     })
     @IsOptional()
     @IsString()
     title?: string;
 
     @ApiPropertyOptional({
-        example: "/uploads/news/preview.jpg",
-        description: "Путь к превью изображению"
+        example: "/static/news/preview.webp",
+        description: "Preview image path"
     })
     @IsOptional()
     @IsString()
@@ -119,15 +154,16 @@ export class UpdateNewsDTO {
     @ApiPropertyOptional({
         example: [
             {
-                subtitle: "Подзаголовок статьи",
-                text: "Текст статьи",
-                list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/news/content-image.jpg"
+                subtitle: "Block subtitle",
+                text: "Block text",
+                list: ["First point", "Second point"],
+                imagePath: "/static/news/content-image.webp"
             }
         ],
-        description: "Контент новости"
+        description: "News content blocks"
     })
     @IsOptional()
+    @Transform(({ value }) => parseNewsContent(value), { toClassOnly: true })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => NewsContentDTO)
@@ -135,15 +171,16 @@ export class UpdateNewsDTO {
 
     @ApiPropertyOptional({
         example: 0,
-        description: "Количество просмотров"
+        description: "Views counter"
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     views?: number;
 
     @ApiPropertyOptional({
-        example: "Краткое описание новости",
-        description: "Короткое описание"
+        example: "Short description",
+        description: "Short description"
     })
     @IsOptional()
     @IsString()
@@ -153,28 +190,28 @@ export class UpdateNewsDTO {
 export class NewsAnswerDTO {
     @ApiProperty({
         example: "550e8400-e29b-41d4-a716-446655440000",
-        description: "Идентификатор новости"
+        description: "News id"
     })
     @IsUUID("4")
     id: string;
 
     @ApiProperty({
         example: "550e8400-e29b-41d4-a716-446655440000",
-        description: "ID автора новости"
+        description: "News author id"
     })
     @IsUUID("4")
     authorId: string;
 
     @ApiProperty({
-        example: "Заголовок новости",
-        description: "Название новости"
+        example: "News title",
+        description: "News title"
     })
     @IsString()
     title: string;
 
     @ApiProperty({
-        example: "/uploads/news/preview.jpg",
-        description: "Путь к превью изображению"
+        example: "/static/news/preview.webp",
+        description: "Preview image path"
     })
     @IsString()
     previewPath: string;
@@ -182,33 +219,33 @@ export class NewsAnswerDTO {
     @ApiProperty({
         example: [
             {
-                subtitle: "Подзаголовок статьи",
-                text: "Текст статьи",
-                list: ["Первый пункт", "Второй пункт"],
-                imagePath: "/uploads/news/content-image.jpg"
+                subtitle: "Block subtitle",
+                text: "Block text",
+                list: ["First point", "Second point"],
+                imagePath: "/static/news/content-image.webp"
             }
         ],
-        description: "Контент новости"
+        description: "News content blocks"
     })
     content: NewsContentDTO[];
 
     @ApiProperty({
         example: 0,
-        description: "Количество просмотров"
+        description: "Views counter"
     })
     @IsInt()
     views: number;
 
     @ApiProperty({
-        example: "Краткое описание новости",
-        description: "Короткое описание"
+        example: "Short description",
+        description: "Short description"
     })
     @IsString()
     shortDescription: string;
 
     @ApiProperty({
         example: "2026-04-29T12:00:00.000Z",
-        description: "Дата создания новости"
+        description: "Created at"
     })
     @Type(() => Date)
     @IsDate()
@@ -216,7 +253,7 @@ export class NewsAnswerDTO {
 
     @ApiProperty({
         example: "2026-04-29T12:00:00.000Z",
-        description: "Дата обновления новости"
+        description: "Updated at"
     })
     @Type(() => Date)
     @IsDate()

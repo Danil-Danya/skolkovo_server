@@ -2,9 +2,18 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 const bootstrap = async () => {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+    app.enableCors({
+        origin: true,
+        credentials: true,
+        methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"]
+    });
     
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Документация API к программе КЛУБ СТРОИТЕЛЕЙ СКОЛКОВО')
@@ -31,8 +40,11 @@ const bootstrap = async () => {
         forbidNonWhitelisted: true,
         transform: true
     }))
+    app.useStaticAssets(join(process.cwd(), "static"), {
+        prefix: "/static/"
+    });
 
-    await app.listen(process.env.PORT ?? 3000);
+    await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 
 bootstrap();

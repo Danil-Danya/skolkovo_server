@@ -18,6 +18,12 @@ enum ReadNotificationStatus {
   READ
 }
 
+enum UserStatus {
+  BANNED
+  WAITING
+  ACTIVE
+}
+
 
 model users {
   id          String @id @default(uuid()) @map("id")
@@ -25,6 +31,7 @@ model users {
   tgChatId    String? @unique @map("tg_chat_id")
   tgUserName  String? @unique @map("tg_user_name")
   password    String
+  status UserStatus @default(WAITING) @map("status")
 
   profile     profiles?
   news        news[]
@@ -52,12 +59,12 @@ model profiles {
 
   firstName   String   @map("first_name")
   lastName    String   @map("last_name")
-  gender      String   @map("gender")
-  biography   String   @map("biography")
-  region      String   @map("region")
-  tgUser      String   @map("tg_user")
+  gender      String?  @map("gender")
+  biography   String?  @map("biography")
+  region      String?  @map("region")
+  tgUser      String?  @map("tg_user")
   phone       String   @map("phone")
-  avatarPath  String   @map("avatar_path")
+  avatarPath  String?  @map("avatar_path")
 
   user        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -124,6 +131,7 @@ model events {
   registrations event_registrations[]
 
   title        String @map("title")
+  previewPath  String? @map("preview_path")
   description  Json   @map("description")
   maxUnits     Int    @map("max_units")
   status       String @map("status")
@@ -183,6 +191,7 @@ model companies {
   description String @map("description")
   phone       String @map("phone")
   site        String @map("site")
+  previewPath String @map("preview_path")
 
   profiles    profiles[]
 
@@ -205,9 +214,10 @@ model position_categories {
 model positions {
   id          String  @id @default(uuid()) @map("id")
   name        String  @map("name")
+  description String @map("description")
 
-  categoryId  String  @map("category_id")
-  category    position_categories @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryId  String?  @map("category_id")
+  category    position_categories? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   profiles    profiles[]
 
