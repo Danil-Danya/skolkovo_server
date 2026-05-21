@@ -1,3 +1,21 @@
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+
+x-app-environment: &app-environment
+  PORT: 3400
+  DB_SERVERNAME: postgres
+  DB_PASSWORD: 1
+  DB_NAME: skolkovo
+  DB_HOST: db
+  DB_PORT: 5432
+  SALT_ROUNDS: 10
+  JWT_ACCESS_SECRET_KEY: skolkovo_access_qwerty_123455_hgsdfjh8rw234d1a4s1a4j1987
+  JWT_REFRESH_SECRET_KEY: skolkovo_refresh_qwerty_123455_8793405ds1324h8ff657f45f
+  TG_AUTH_SECRET_KEY: 34dfgB8dK98bdr34dGsfvrtfhj768576ndgfdg&Vp&7ccfughurisechner
+  TG_BOT_API_BASE_URL: https://api-bot.skolkovo.ru/server-api/v1
+  TG_BOT_API_TOKEN: jhsdfgkfdsjgfdsigfsdiogsdffgdt45.unjkghfsd8432tnjdksfhg89345w12sdlkfhasd.uir8916b7tubys7ehjasdhjgafd
+
 services:
   db:
     image: postgres:17
@@ -17,32 +35,50 @@ services:
       timeout: 5s
       retries: 20
 
+  migrate:
+    image: skolkovo-api:local
+    build: *app-build
+    container_name: skolkovo-migrate
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-environment
+      MIGRATION_MAX_RETRIES: 12
+      MIGRATION_RETRY_DELAY_MS: 5000
+    command: ["node", "docker/run-migrations.js"]
+
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: skolkovo-api:local
+    build: *app-build
     container_name: skolkovo-api
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
-      PORT: 3400
-      DB_SERVERNAME: postgres
-      DB_PASSWORD: 1
-      DB_NAME: skolkovo
-      DB_HOST: db
-      DB_PORT: 5433
-      SALT_ROUNDS: 10
-      JWT_ACCESS_SECRET_KEY: skolkovo_access_qwerty_123455_hgsdfjh8rw234d1a4s1a4j1987
-      JWT_REFRESH_SECRET_KEY: skolkovo_refresh_qwerty_123455_8793405ds1324h8ff657f45f
-      TG_AUTH_SECRET_KEY: 34dfgB8dK98bdr34dGsfvrtfhj768576ndgfdg&Vp&7ccfughurisechner
-      TG_BOT_API_BASE_URL: https://api-bot.skolkovo.ru/server-api/v1
-      TG_BOT_API_TOKEN: jhsdfgkfdsjgfdsigfsdiogsdffgdt45.unjkghfsd8432tnjdksfhg89345w12sdlkfhasd.uir8916b7tubys7ehjasdhjgafd
+      <<: *app-environment
     ports:
       - "3400:3400"
     volumes:
       - static_data:/app/static
+
+  event-status-worker:
+    image: skolkovo-api:local
+    build: *app-build
+    container_name: skolkovo-event-status-worker
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-environment
+    command: ["node", "dist/src/event-status-worker.js"]
 
 volumes:
   postgres_data:

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from "@nestjs/swagger";
 import { plainToInstance, Transform, Type } from "class-transformer";
 import { IsArray, IsDate, IsInt, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator";
+import { QueryDTO } from "src/core/dto/global.dto";
 
 const parseJsonString = (value: unknown): unknown => {
     if (typeof value !== "string") {
@@ -23,6 +24,54 @@ const parseNewsContent = (value: unknown): unknown => {
     }
 
     return parsedValue.map((item) => plainToInstance(NewsContentDTO, item));
+}
+
+const parseCategoryIds = (value: unknown): string[] | undefined => {
+    if (value === undefined || value === null) {
+        return undefined;
+    }
+
+    if (Array.isArray(value)) {
+        const parsedValues = value
+            .flatMap((item) => parseCategoryIds(item) ?? [])
+            .filter(Boolean);
+
+        return parsedValues.length > 0 ? parsedValues : undefined;
+    }
+
+    if (typeof value !== "string") {
+        return undefined;
+    }
+
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length === 0) {
+        return undefined;
+    }
+
+    try {
+        const parsedValue = JSON.parse(trimmedValue);
+
+        if (Array.isArray(parsedValue)) {
+            const parsedCategories = parsedValue
+                .map((item) => String(item).trim())
+                .filter(Boolean);
+
+            return parsedCategories.length > 0 ? parsedCategories : undefined;
+        }
+    }
+    catch {}
+
+    const normalizedValue = trimmedValue.startsWith("[") && trimmedValue.endsWith("]")
+        ? trimmedValue.slice(1, -1)
+        : trimmedValue;
+
+    const parsedCategories = normalizedValue
+        .split(",")
+        .map((item) => item.trim().replace(/^['"]|['"]$/g, ""))
+        .filter(Boolean);
+
+    return parsedCategories.length > 0 ? parsedCategories : undefined;
 }
 
 export class NewsContentDTO {
@@ -270,4 +319,28 @@ export class NewsDTO {
     shortDescription: string;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export class NewsQueryDTO extends QueryDTO {
+    @ApiPropertyOptional({
+        type: String,
+        example: "[550e8400-e29b-41d4-a716-446655440000, 660e8400-e29b-41d4-a716-446655440000]",
+        description: "Filter news by category ids"
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseCategoryIds(value))
+    @IsArray()
+    @IsString({ each: true })
+    categories?: string[];
+
+    @ApiPropertyOptional({
+        type: String,
+        example: "[550e8400-e29b-41d4-a716-446655440000, 660e8400-e29b-41d4-a716-446655440000]",
+        description: "Alias for categories query parameter"
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseCategoryIds(value))
+    @IsArray()
+    @IsString({ each: true })
+    categorirs?: string[];
 }

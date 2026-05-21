@@ -69,6 +69,35 @@ export class CompanyService {
         const company = await this.prisma.companies.findUnique({
             where: {
                 id
+            },
+            include: {
+                companyCategory: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                profileLinks: {
+                    select: {
+                        profile: {
+                            select: {
+                                firstName: true,
+                                lastName: true,
+                                avatarPath: true,
+                                user: {
+                                    select: {
+                                        id: true,
+                                    }
+                                },
+                                position: {
+                                    select: {
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 

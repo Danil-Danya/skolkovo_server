@@ -4,10 +4,14 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { CreateNewsDTO, NewsAnswerDTO, UpdateNewsDTO } from "./dto/news.dto";
 import { Prisma } from "prisma/generated/browser";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
+import { NotificationService } from "../notificatations/notification.service";
 
 @Injectable()
 export class NewsService {
-    constructor (private prisma: PrismaService) {}
+    constructor (
+        private prisma: PrismaService,
+        private notificationService: NotificationService
+    ) {}
 
     private async ensureAuthorExists (authorId: string): Promise<void> {
         const author = await this.prisma.users.findUnique({
@@ -35,6 +39,11 @@ export class NewsService {
         if (!createdNews) {
             throw new InternalServerErrorException('Не получилось создать новость');
         }
+
+        await this.notificationService.createNotificationsForAllUsers({
+            title: `Новая новость: ${createdNews.title}`,
+            text: `Уважаемые участники! Рады сообщить вам о новой новости "${createdNews.title}". Не упустите возможность узнать больше о строительстве и инновациях в Сколково!`
+        });
 
         return createdNews;
     }
@@ -151,8 +160,8 @@ export class NewsService {
         return news;
     }
 
-    async getAllNewsByFilter (paginate: PaginateDTO, filters: FiltersDTO) {
-        const whereClause = {};
+    async getAllNewsByFilter (paginate: PaginateDTO, filters: FiltersDTO, categories?: string[]) {
+        const whereClause: Record<string, unknown> = {};
         let order = {};
 
         const page = paginate?.page ?? 1;
@@ -173,7 +182,11 @@ export class NewsService {
             order = { [filters.orderBy]: filters.order };
         }
 
-        const skip = (page - 1) * limit;
+        if (categories && categories.length > 0) {
+            whereClause.categoryId = {
+                in: categories
+            };
+        }
 
         const news = await findAndPaginate(this.prisma.news, {
             where: whereClause,

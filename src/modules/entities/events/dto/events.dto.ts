@@ -116,7 +116,7 @@ export class CreateEventDTO {
     maxUnits: number;
 
     @ApiProperty({
-        example: "active",
+        example: "CREATED",
         description: "Статус мероприятия"
     })
     @IsString()
@@ -238,7 +238,7 @@ export class UpdateEventDTO {
     maxUnits?: number;
 
     @ApiPropertyOptional({
-        example: "active",
+        example: "CREATED",
         description: "Статус мероприятия"
     })
     @IsOptional()
@@ -351,7 +351,7 @@ export class EventAnswerDTO {
     maxUnits: number;
 
     @ApiProperty({
-        example: "active",
+        example: "CREATED",
         description: "Статус мероприятия"
     })
     @IsString()

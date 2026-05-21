@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { UserStatus } from "@prisma/client";
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { UserDTO } from "../entities/users/dto/users.dto";
 import { USER_SELECT } from "../entities/users/types/user.types";
@@ -11,11 +12,13 @@ import {
     TokenAnswerDTO
 } from "./jwt/jwt.dto";
 import { decryptTelegramAuthPayload } from "./utils/decriptASE.utils";
+import { NotificationService } from "../entities/notificatations/notification.service";
 
 @Injectable()
 export class AuthService {
     constructor (
         private prisma: PrismaService,
+        private notificationService: NotificationService,
         private jwt: JwtService
     ) {}
 
@@ -28,16 +31,47 @@ export class AuthService {
         return normalizedUsername.length > 0 ? normalizedUsername : null;
     }
 
-    async applyAccount (id: string) {
+    private async updateAccountStatus (id: string, status: UserStatus) {
         const accountExist = await this.prisma.users.findUnique({
             where: {
                 id
-            }
+            },
+            select: USER_SELECT
         });
 
         if (!accountExist) {
-
+            throw new NotFoundException("Пользователь не найден");
         }
+
+        return await this.prisma.users.update({
+            where: {
+                id
+            },
+            data: {
+                status
+            },
+            select: USER_SELECT
+        });
+    }
+
+    async applyAccount (id: string) {
+        await this.notificationService.createNotificationsForAnyUser({
+            title: "Ваша заявка на участие в Клубе Строителей Сколково была одобрена",
+            text: "Поздравляем! Ваша заявка на участие в Клубе Строителей Сколково была одобрена. Вы можете начать использовать все возможности нашего сервиса.",
+            userIds: [id]
+        });
+
+        return await this.updateAccountStatus(id, UserStatus.ACTIVE);
+    }
+
+    async banAccount (id: string) {
+            await this.notificationService.createNotificationsForAnyUser({
+                title: "Ваша заявка на участие в Клубе Строителей Сколково была отклонена",
+                text: "Мы сожалеем, но ваша заявка на участие в Клубе Строителей Сколково была отклонена.",
+                userIds: [id]
+            });
+
+        return await this.updateAccountStatus(id, UserStatus.BANNED);
     }
 
     async generateJWTTokens (payload: JWTUserPayloadDTO): Promise<TokenAnswerDTO> {

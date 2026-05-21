@@ -1,6 +1,46 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsDate, IsOptional, IsString, IsUUID } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsDate, IsOptional, IsString, IsUUID } from "class-validator";
+
+const parseJsonString = (value: unknown): unknown => {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    }
+    catch {
+        return value;
+    }
+}
+
+const parseCompanyIds = (value: unknown): unknown => {
+    const parsedValue = parseJsonString(value);
+
+    if (parsedValue === undefined || parsedValue === null) {
+        return parsedValue;
+    }
+
+    if (Array.isArray(parsedValue)) {
+        return parsedValue;
+    }
+
+    if (typeof parsedValue !== "string") {
+        return parsedValue;
+    }
+
+    const normalizedValue = parsedValue.trim();
+
+    if (!normalizedValue) {
+        return [];
+    }
+
+    return normalizedValue
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
 
 export class CreateProfileDTO {
     @ApiProperty()
@@ -11,6 +51,20 @@ export class CreateProfileDTO {
     @IsOptional()
     @IsUUID("4")
     companyId?: string | null;
+
+    @ApiPropertyOptional({
+        type: [String],
+        nullable: true,
+        example: [
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550e8400-e29b-41d4-a716-446655440001"
+        ]
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseCompanyIds(value), { toClassOnly: true })
+    @IsArray()
+    @IsUUID("4", { each: true })
+    companyIds?: string[] | null;
 
     @ApiPropertyOptional({ nullable: true })
     @IsOptional()
@@ -60,6 +114,20 @@ export class UpdateProfileDTO {
     @IsOptional()
     @IsUUID("4")
     companyId?: string | null;
+
+    @ApiPropertyOptional({
+        type: [String],
+        nullable: true,
+        example: [
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550e8400-e29b-41d4-a716-446655440001"
+        ]
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseCompanyIds(value), { toClassOnly: true })
+    @IsArray()
+    @IsUUID("4", { each: true })
+    companyIds?: string[] | null;
 
     @ApiPropertyOptional({ nullable: true })
     @IsOptional()
@@ -144,6 +212,18 @@ export class ProfileAnswerDTO {
     @IsUUID("4")
     companyId?: string | null;
 
+    @ApiPropertyOptional({
+        type: [String],
+        example: [
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550e8400-e29b-41d4-a716-446655440001"
+        ]
+    })
+    @IsOptional()
+    @IsArray()
+    @IsUUID("4", { each: true })
+    companyIds?: string[];
+
     @ApiPropertyOptional({ nullable: true })
     @IsOptional()
     @IsUUID("4")
@@ -201,6 +281,7 @@ export class ProfileDTO {
     id: string;
     userId: string;
     companyId?: string | null;
+    companyIds?: string[];
     positionId?: string | null;
     firstName: string;
     lastName: string;

@@ -4,10 +4,15 @@ import { CreateEventDTO, EventAnswerDTO, UpdateEventDTO } from "./dto/events.dto
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { Prisma } from "prisma/generated/browser";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
+import { eventAnswerInclude } from "./types/event.type";
+import { NotificationService } from "../notificatations/notification.service";
 
 @Injectable()
 export class EventService {
-    constructor (private prisma: PrismaService) {}
+    constructor (
+        private prisma: PrismaService,
+        private notificationService: NotificationService
+    ) {}
 
     async createEvent (data: CreateEventDTO): Promise<EventAnswerDTO> {
         const createdEvent = await this.prisma.events.create({
@@ -21,6 +26,11 @@ export class EventService {
         if (!createdEvent) {
             throw new InternalServerErrorException('Не получилось создать событие');
         }
+
+        await this.notificationService.createNotificationsForAllUsers({
+            title: `Новое событие ${createdEvent.title} скоро состоится!`,
+            text: `Уважаемые участники! Рады сообщить вам о новом событии "${createdEvent.title}", которое скоро состоится. Не упустите возможность принять участие и узнать больше о строительстве и инновациях в Сколково!`
+        });
 
         return createdEvent;
     }
@@ -81,27 +91,7 @@ export class EventService {
             where: {
                 id
             },
-            include: {
-                author: {
-                    select: {
-                        profile: {
-                            select: {
-                                firstName: true,
-                                lastName: true
-                            }
-                        }
-                    }
-                },
-                location: {
-                    select: {
-                        name: true,
-                        address: true,
-                        lat: true,
-                        long: true,
-                        yandexLink: true
-                    }
-                }
-            }
+            include: eventAnswerInclude
         }) as EventAnswerDTO;
 
         if (!event) {
@@ -148,7 +138,7 @@ export class EventService {
         const news = await findAndPaginate(this.prisma.events, {
             where: whereClause,
             orderBy: order,
-            include,
+            include: eventAnswerInclude,
             page,
             limit
         });

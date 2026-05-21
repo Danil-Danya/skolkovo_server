@@ -1,8 +1,22 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
-import { PrismaService } from "src/database/prisma/prisma.service";
-import { CreatePositionDTO, PositionAnswerDTO, UpdatePositionDTO } from "./dto/position.dto";
+import type { UploadedStaticFile } from "src/core/types/files.type";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
+import { PrismaService } from "src/database/prisma/prisma.service";
+import {
+    CreatePositionDTO,
+    ImportPositionsFromFileDTO,
+    ImportPositionsResultDTO,
+    PositionAnswerDTO,
+    UpdatePositionDTO
+} from "./dto/position.dto";
+import type { PositionImportCreateData } from "./types/position-import.type";
+import {
+    buildPositionImportPlan,
+    ensurePositionImportFile,
+    normalizePositionImportName,
+    parsePositionImportFile
+} from "./utils/position-import.util";
 
 @Injectable()
 export class PositionService {
@@ -16,6 +30,56 @@ export class PositionService {
         }
 
         return createdPosition;
+    }
+
+    private async getExistingPositionNames (): Promise<Set<string>> {
+        const existingPositions = await this.prisma.positions.findMany({
+            select: {
+                name: true
+            }
+        });
+
+        return new Set(
+            existingPositions
+                .map((position) => normalizePositionImportName(position.name))
+                .filter(Boolean)
+        );
+    }
+
+    private async createImportedPositions (positionsToCreate: PositionImportCreateData[]): Promise<number> {
+        if (!positionsToCreate.length) {
+            return 0;
+        }
+
+        return (await this.prisma.positions.createMany({
+            data: positionsToCreate
+        })).count;
+    }
+
+    async importPositionsFromFile (
+        file: UploadedStaticFile | undefined,
+        data: ImportPositionsFromFileDTO
+    ): Promise<ImportPositionsResultDTO> {
+        const importFile = ensurePositionImportFile(file);
+        const parsedRows = parsePositionImportFile(importFile, {
+            skipFirstRow: data.skipFirstRow
+        });
+        const existingNames = await this.getExistingPositionNames();
+        const { positionsToCreate, skippedRows } = buildPositionImportPlan(
+            parsedRows,
+            existingNames
+        );
+        const createdCount = await this.createImportedPositions(positionsToCreate);
+
+        return {
+            message: createdCount
+                ? `Imported ${createdCount} positions`
+                : "No new positions were imported",
+            totalRows: parsedRows.length,
+            createdCount,
+            skippedCount: skippedRows.length,
+            skippedRows
+        };
     }
 
     async updatePosition (id: string, data: UpdatePositionDTO): Promise<PositionAnswerDTO> {
@@ -69,6 +133,26 @@ export class PositionService {
         const position = await this.prisma.positions.findUnique({
             where: {
                 id
+            },
+            include: {
+                profiles: {
+                    select: {
+                        _count: true,
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        avatarPath: true,
+                        companyLinks: {
+                            select:{
+                                company: {
+                                    select: {
+                                        name: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -104,6 +188,13 @@ export class PositionService {
         const positions = await findAndPaginate(this.prisma.positions, {
             where: whereClause,
             orderBy: order,
+            include: {
+                profiles: {
+                    select: {
+                        _count: true,
+                    }
+                }
+            },
             page,
             limit
         });

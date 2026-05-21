@@ -3,7 +3,7 @@ dist
 .git
 .vscode
 coverage
-static
+.env
 npm-debug.log
 yarn-error.log
 *.log

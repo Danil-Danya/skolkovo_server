@@ -20,6 +20,7 @@ const bootstrap = async () => {
         .setDescription('Здесь будет описанно подключение API маршрутов, их типы, схемы, ответы сервера и тд')
         .setVersion('1.0')
         .addServer('http://127.0.0.1:3000/server-api/v1')
+        .addServer('https://api-skolkovo.legalguard.uz/server-api/v1')
         .addBearerAuth(
             {
                 type: 'http',

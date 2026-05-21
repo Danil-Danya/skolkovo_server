@@ -9,6 +9,8 @@ import { JWTRefreshGuard } from "./guards/jwt_refresh.guard";
 import { RolesGuard } from "./guards/permission.guard";
 import { JWTStrategyAccess } from "./jwt/jwt_access.strategy";
 import { JWTStrategyRefresh } from "./jwt/jwt_refresh.strategy";
+import { NotificationModule } from "../entities/notificatations/notification.module";
+import { NotificationService } from "../entities/notificatations/notification.service";
 
 @Module({
     controllers: [AuthController],
@@ -18,7 +20,8 @@ import { JWTStrategyRefresh } from "./jwt/jwt_refresh.strategy";
         JWTRefreshGuard,
         RolesGuard,
         JWTStrategyAccess,
-        JWTStrategyRefresh
+        JWTStrategyRefresh,
+        NotificationService
     ],
     exports: [
         AuthService,
@@ -29,6 +32,7 @@ import { JWTStrategyRefresh } from "./jwt/jwt_refresh.strategy";
     imports: [
         UserModule,
         PassportModule,
+        NotificationModule,
         JwtModule.register({})
     ]
 })

@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { EventService } from "../events/events.service";
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { CreateEventRegistrationDTO, EventRegistrationAnswerDTO } from "./dto/event_registration.dto";
 import { EventRegistrationStatus } from "@prisma/client";
+import { EVENT_STATUSES } from "../events/types/event-status.type";
 
 @Injectable()
 export class EventRegistrationsService {
@@ -13,6 +14,11 @@ export class EventRegistrationsService {
 
     async registerUserForAnEvent (data: CreateEventRegistrationDTO): Promise<EventRegistrationAnswerDTO> {
         const event = await this.eventService.getOneById(data.eventId);
+
+        if (event.status !== EVENT_STATUSES.CREATED) {
+            throw new BadRequestException('Р—Р°РїРёСЃСЊ РЅР° РґР°РЅРЅРѕРµ СЃРѕР±С‹С‚РёРµ Р·Р°РєСЂС‹С‚Р°');
+        }
+
         const eventRegistration = await this.prisma.event_registrations.create({ data });
 
         return eventRegistration;

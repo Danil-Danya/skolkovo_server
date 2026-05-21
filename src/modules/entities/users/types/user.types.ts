@@ -20,13 +20,15 @@ export const USER_SELECT = Prisma.validator<Prisma.usersSelect>()({
             region: true,
             tgUser: true,
             phone: true,
-
-            company: {
+            companyLinks: {
                 select: {
-                    name: true
+                    company: {
+                        select: {
+                            name: true
+                        }
+                    }
                 }
             },
-
             position: {
                 select: {
                     name: true

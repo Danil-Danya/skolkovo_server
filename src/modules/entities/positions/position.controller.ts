@@ -1,7 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import { rm } from "fs/promises";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFile } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import { UploadFile } from "src/core/decorators/upload_file.decorator";
+import type { UploadedStaticFile } from "src/core/types/files.type";
 import { PositionService } from "./position.service";
-import { CreatePositionDTO, UpdatePositionDTO, PositionAnswerDTO, PositionDTO } from "./dto/position.dto";
+import {
+    CreatePositionDTO,
+    ImportPositionsFromFileDTO,
+    ImportPositionsResultDTO,
+    PositionAnswerDTO,
+    PositionDTO,
+    UpdatePositionDTO
+} from "./dto/position.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO, QueryDTO } from "src/core/dto/global.dto";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
 
@@ -9,6 +19,26 @@ import { Auth } from "src/modules/auth/decorators/auth.decorators";
 @Controller("positions")
 export class PositionController {
     constructor (private positionService: PositionService) {}
+
+    @Post("import")
+    @UploadFile("file", "positions/imports")
+    @ApiConsumes("multipart/form-data")
+    @ApiOperation({ summary: "Import positions from an Excel file" })
+    @ApiBody({ type: ImportPositionsFromFileDTO })
+    @ApiOkResponse({ type: ImportPositionsResultDTO })
+    private async importFromFile (
+        @Body() data: ImportPositionsFromFileDTO,
+        @UploadedFile() file?: UploadedStaticFile
+    ): Promise<ImportPositionsResultDTO> {
+        try {
+            return await this.positionService.importPositionsFromFile(file, data);
+        }
+        finally {
+            if (file?.path) {
+                await rm(file.path, { force: true }).catch(() => undefined);
+            }
+        }
+    }
 
     @Post()
     // @Auth()

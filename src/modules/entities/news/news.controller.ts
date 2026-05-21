@@ -1,10 +1,10 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFiles } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
-import { DeletedMessageDTO, FiltersDTO, PaginateDTO, QueryDTO } from "src/core/dto/global.dto";
+import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { UploadFiles } from "src/core/decorators/upload_files.decorator";
 import type { UploadedStaticFile, UploadedStaticFilesMap } from "src/core/types/files.type";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
-import { CreateNewsDTO, CreateNewsWithFilesDTO, NewsAnswerDTO, NewsContentDTO, NewsDTO, UpdateNewsDTO } from "./dto/news.dto";
+import { CreateNewsDTO, CreateNewsWithFilesDTO, NewsAnswerDTO, NewsContentDTO, NewsDTO, NewsQueryDTO, UpdateNewsDTO } from "./dto/news.dto";
 import { NewsService } from "./news.service";
 
 type NewsUploadedFiles = UploadedStaticFilesMap & {
@@ -185,7 +185,7 @@ export class NewsController {
     // @ApiBearerAuth()
     @ApiOperation({ summary: "Получить новости по фильтру" })
     @ApiOkResponse({ type: NewsDTO, isArray: true })
-    private async getAllByFilter (@Query() query: QueryDTO) {
+    private async getAllByFilter (@Query() query: NewsQueryDTO) {
         const filters: FiltersDTO = {
             where: query.where,
             whereField: query.whereField,
@@ -200,7 +200,9 @@ export class NewsController {
             limit: query.limit
         };
 
-        const news = await this.newsService.getAllNewsByFilter(paginate, filters);
+        const categories = query.categorirs ?? query.categories;
+
+        const news = await this.newsService.getAllNewsByFilter(paginate, filters, categories);
         return news;
     }
 

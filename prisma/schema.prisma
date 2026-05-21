@@ -24,6 +24,11 @@ enum UserStatus {
   ACTIVE
 }
 
+enum UserFollowStatus {
+  FOLLOW
+  UNFOLLOW
+}
+
 
 model users {
   id          String @id @default(uuid()) @map("id")
@@ -39,6 +44,8 @@ model users {
 
   createdEvents events[] @relation("EventAuthor")
   eventRegistrations event_registrations[]
+  followingRelations followers[] @relation("Follower")
+  followerRelations  followers[] @relation("Following")
 
   readNotifications read_notifications[]
 
@@ -51,8 +58,7 @@ model profiles {
   id          String   @id @default(uuid()) @map("id")
   userId      String   @unique @map("user_id")
 
-  companyId   String?  @map("company_id")
-  company     companies? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyLinks profile_companies[]
 
   positionId  String?  @map("position_id")
   position    positions? @relation(fields: [positionId], references: [id], onDelete: SetNull)
@@ -64,6 +70,7 @@ model profiles {
   region      String?  @map("region")
   tgUser      String?  @map("tg_user")
   phone       String   @map("phone")
+  education   String?  @map("education")
   avatarPath  String?  @map("avatar_path")
 
   user        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -71,7 +78,6 @@ model profiles {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([companyId])
   @@index([positionId])
   @@map("profiles")
 }
@@ -105,8 +111,10 @@ model user_roles {
 model news {
   id           String @id @default(uuid()) @map("id")
   authorId     String @map("author_id")          
+  categoryId   String? @map("category_id")
 
   author       users  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category     news_categories? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   title        String @map("title")
   previewPath  String @map("preview_path")
@@ -117,6 +125,8 @@ model news {
   
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([categoryId])
 }
 
 model events {
@@ -193,36 +203,78 @@ model companies {
   site        String @map("site")
   previewPath String @map("preview_path")
 
-  profiles    profiles[]
+  profileLinks profile_companies[]
 
   registeredAt DateTime? @map("registered_at")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  companyCategoryId String? @map("company_category_id")
+  companyCategory   company_categories? @relation(fields: [companyCategoryId], references: [id], onDelete: SetNull)
+
+  @@index([companyCategoryId])
   @@map("companies")
 }
 
-model position_categories {
+model company_categories {
   id          String  @id @default(uuid()) @map("id")
   name        String  @map("name")
+  description String @map("description")
 
-  positions   positions[]
+  companies    companies[]
 
-  @@map("position_categories")
+  @@map("company_categories")
+}
+
+model profile_companies {
+  profileId  String   @map("profile_id")
+  companyId  String   @map("company_id")
+
+  profile    profiles @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company    companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@id([profileId, companyId])
+  @@index([companyId])
+  @@map("profile_companies")
 }
 
 model positions {
   id          String  @id @default(uuid()) @map("id")
   name        String  @map("name")
   description String @map("description")
-
-  categoryId  String?  @map("category_id")
-  category    position_categories? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-
   profiles    profiles[]
 
-  @@index([categoryId])
   @@map("positions")
+}
+
+model followers {
+  id          String  @id @default(uuid()) @map("id")
+
+  status      String  @map("status")
+
+  followerId   String  @map("follower_id")
+  followingId  String  @map("following_id")
+
+  follower     users   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following    users   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("followers")
+}
+
+model news_categories {
+  id          String  @id @default(uuid()) @map("id")
+  name        String  @map("name")
+
+  news        news[]
+
+  @@map("news_categories")
 }
 
 model notifications {
