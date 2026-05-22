@@ -3,13 +3,26 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { CompanyCategoryAnswerDTO, CreateCompanyCategoryDTO, UpdateCompanyCategoryDTO } from "./dto/company_categories.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
+import { normalizeCompanyCategoryCompanyIds, replaceCompanyCategoryCompanies } from "./utils/company-category.util";
 
 @Injectable()
 export class CompanyCategoriesService {
     constructor (private prisma: PrismaService) {}
 
     async createCompanyCategory (data: CreateCompanyCategoryDTO): Promise<CompanyCategoryAnswerDTO> {
-        const createdCompanyCategory = await this.prisma.company_categories.create({ data });
+        const companyIds = normalizeCompanyCategoryCompanyIds(data) ?? [];
+        const createdCompanyCategory = await this.prisma.$transaction(async (tx) => {
+            const createdCompanyCategory = await tx.company_categories.create({
+                data: {
+                    name: data.name,
+                    description: data.description
+                }
+            });
+
+            await replaceCompanyCategoryCompanies(tx, createdCompanyCategory.id, companyIds);
+
+            return createdCompanyCategory;
+        });
 
         if (!createdCompanyCategory) {
             throw new InternalServerErrorException("Ошибка при создании категории компании");
@@ -25,9 +38,23 @@ export class CompanyCategoriesService {
             throw new NotFoundException("Категория компании не найдена");
         }
 
-        const updatedCompanyCategory = await this.prisma.company_categories.update({
-            where: { id },
-            data
+        const companyIds = normalizeCompanyCategoryCompanyIds(data);
+        const updatedCompanyCategory = await this.prisma.$transaction(async (tx) => {
+            const updatedCompanyCategory = await tx.company_categories.update({
+                where: {
+                    id
+                },
+                data: {
+                    name: data.name,
+                    description: data.description
+                }
+            });
+
+            if (companyIds !== undefined) {
+                await replaceCompanyCategoryCompanies(tx, id, companyIds);
+            }
+
+            return updatedCompanyCategory;
         });
 
         if (!updatedCompanyCategory) {

@@ -32,9 +32,10 @@ export class AuthService {
     }
 
     private async updateAccountStatus (id: string, status: UserStatus) {
-        const accountExist = await this.prisma.users.findUnique({
+        const accountExist = await this.prisma.users.findFirst({
             where: {
-                id
+                id,
+                deletedAt: null
             },
             select: USER_SELECT
         });
@@ -117,6 +118,7 @@ export class AuthService {
 
         const user = await this.prisma.users.findFirst({
             where: {
+                deletedAt: null,
                 tgUserName: {
                     equals: normalizedUsername,
                     mode: "insensitive"
@@ -146,9 +148,10 @@ export class AuthService {
 
         const normalizedUsername = this.normalizeTelegramUsername(payload.tgUserName);
 
-        let user = await this.prisma.users.findUnique({
+        let user = await this.prisma.users.findFirst({
             where: {
-                tgChatId: payload.tgChatId
+                tgChatId: payload.tgChatId,
+                deletedAt: null
             }
         });
 
@@ -183,9 +186,10 @@ export class AuthService {
             let isNewUser = false;
             let isNewProfile = false;
 
-            let user = await tx.users.findUnique({
+            let user = await tx.users.findFirst({
                 where: {
-                    tgChatId: data.chatId
+                    tgChatId: data.chatId,
+                    deletedAt: null
                 }
             });
 
@@ -257,9 +261,10 @@ export class AuthService {
     }
 
     async getMe (user: UserDTO) {
-        const fullProfile = await this.prisma.users.findUnique({
+        const fullProfile = await this.prisma.users.findFirst({
             where: {
-                id: user.id
+                id: user.id,
+                deletedAt: null
             },
             select: USER_SELECT
         });

@@ -82,4 +82,11 @@ export class EventController {
         const events = await this.eventsService.getAllByFilter(paginate, filters);
         return events;
     }
+
+    @Put(":id/counter-views")
+    @ApiOperation({ summary: "Обновить счетчик просмотров события" })
+    private async updateCounterViews (@Param("id") id: string): Promise<EventAnswerDTO> {
+        const updatedEvent = await this.eventsService.updateEventCounter(id);
+        return updatedEvent;
+    }
 }

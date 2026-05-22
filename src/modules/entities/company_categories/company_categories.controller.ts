@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { CompanyCategoriesService } from "./company_categories.service";
-import { CompanyCategoryAnswerDTO, CreateCompanyCategoryDTO } from "./dto/company_categories.dto";
+import { CompanyCategoryAnswerDTO, CreateCompanyCategoryDTO, UpdateCompanyCategoryDTO } from "./dto/company_categories.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO, QueryDTO } from "src/core/dto/global.dto";
 import { ApiBasicAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
@@ -12,7 +12,6 @@ export class CompanyCategoriesController {
 
     @Post()
     @Auth()
-    @ApiTags('Создание категории компании')
     @ApiOperation({ summary: "Создать новую категорию компании" })
     @ApiBasicAuth()
     @ApiOkResponse({ type: CompanyCategoryAnswerDTO })
@@ -23,18 +22,16 @@ export class CompanyCategoriesController {
 
     @Put(':id')
     @Auth()
-    @ApiTags('Обновление категории компании')
     @ApiOperation({ summary: "Обновить существующую категорию компании" })
     @ApiBasicAuth()
     @ApiOkResponse({ type: CompanyCategoryAnswerDTO })
-    async update (@Param('id') id: string, @Body() data: CreateCompanyCategoryDTO): Promise<CompanyCategoryAnswerDTO> {
+    async update (@Param('id') id: string, @Body() data: UpdateCompanyCategoryDTO): Promise<CompanyCategoryAnswerDTO> {
         const updatedCompanyCategory = await this.companyCategoriesService.updateCompanyCategory(id, data);
         return updatedCompanyCategory;
     }
 
     @Delete(':id')
     @Auth()
-    @ApiTags('Удаление категории компании')
     @ApiOperation({ summary: "Удалить существующую категорию компании" })
     @ApiBasicAuth()
     @ApiOkResponse({ type: DeletedMessageDTO })
@@ -44,8 +41,7 @@ export class CompanyCategoriesController {
     }
 
     @Get(':id')
-    @Auth()
-    @ApiTags('Получение категории компании')
+    //@Auth()
     @ApiOperation({ summary: "Получить информацию о категории компании" })
     @ApiBasicAuth()
     @ApiOkResponse({ type: CompanyCategoryAnswerDTO })
@@ -55,8 +51,7 @@ export class CompanyCategoriesController {
     }
 
     @Get()
-    @Auth()
-    @ApiTags('Получение всех категорий компаний')
+    //@Auth()
     @ApiOkResponse({ type: CompanyCategoryAnswerDTO, isArray: true })
     private async getAllByFilter (@Query() query: QueryDTO) {
         const filters: FiltersDTO = {

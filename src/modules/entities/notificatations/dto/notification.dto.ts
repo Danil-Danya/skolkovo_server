@@ -1,6 +1,43 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import { Type } from "class-transformer";
+import {
+    IsArray,
+    IsEnum,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    IsUUID,
+    ValidateNested
+} from "class-validator";
 import { ReadNotificationStatus } from "@prisma/client";
+
+export enum NotificationActionType {
+    MINI_APP = "MINI_APP"
+}
+
+export class NotificationActionLinkDto {
+    @ApiProperty({
+        example: "Смотреть в приложении"
+    })
+    @IsString()
+    @IsNotEmpty()
+    label: string;
+
+    @ApiProperty({
+        enum: NotificationActionType,
+        example: NotificationActionType.MINI_APP
+    })
+    @IsEnum(NotificationActionType)
+    type: NotificationActionType;
+
+    @ApiPropertyOptional({
+        example: "/news"
+    })
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    path?: string;
+}
 
 export class CreateNotificationDto {
     @ApiProperty({
@@ -16,6 +53,16 @@ export class CreateNotificationDto {
     @IsString()
     @IsNotEmpty()
     text: string;
+
+    @ApiPropertyOptional({
+        type: NotificationActionLinkDto,
+        isArray: true
+    })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => NotificationActionLinkDto)
+    actionLinks?: NotificationActionLinkDto[];
 }
 
 export class CreateNotificationsForAnyUserDto {
@@ -32,6 +79,16 @@ export class CreateNotificationsForAnyUserDto {
     @IsString()
     @IsNotEmpty()
     text: string;
+
+    @ApiPropertyOptional({
+        type: NotificationActionLinkDto,
+        isArray: true
+    })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => NotificationActionLinkDto)
+    actionLinks?: NotificationActionLinkDto[];
 
     @ApiProperty({
         example: [

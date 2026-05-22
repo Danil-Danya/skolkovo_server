@@ -11,11 +11,22 @@ import { USER_SELECT } from "./types/user.types";
 export class UsersService {
     constructor (private prisma: PrismaService) {}
 
+    private async getActiveUserById (id: string) {
+        return await this.prisma.users.findFirst({
+            where: {
+                id,
+                deletedAt: null
+            },
+            select: USER_SELECT
+        });
+    }
+
     async createUser (data: CreateUserDTO): Promise<UserAnswerDTO> {
         if (data.tgChatId) {
-            const userExist = await this.prisma.users.findUnique({ 
+            const userExist = await this.prisma.users.findFirst({ 
                 where: { 
-                    tgChatId: data.tgChatId 
+                    tgChatId: data.tgChatId,
+                    deletedAt: null
                 } 
             });
 
@@ -43,22 +54,16 @@ export class UsersService {
     }
 
     async deleteUser (id: string): Promise<DeletedMessageDTO> {
-        const userExist = await this.prisma.users.findUnique({ 
-            where: { 
-                id
-            },
-            select: USER_SELECT,
-        });
+        const userExist = await this.getActiveUserById(id);
 
         if (!userExist) {
             throw new NotFoundException('Данный пользователь не был найден');
         }
 
-        await this.prisma.users.delete({
-            where: {
-                id
-            }
-        })
+        await this.prisma.$executeRaw`
+            DELETE FROM "users"
+            WHERE "id" = ${id}
+        `;
 
         return {
             message: 'Пользователь был успешно удален'
@@ -66,12 +71,7 @@ export class UsersService {
     }
 
     async getOneUserById (id: string): Promise<UserAnswerDTO> {
-        const user = await this.prisma.users.findUnique({ 
-            where: { 
-                id
-            },
-            select: USER_SELECT
-        });
+        const user = await this.getActiveUserById(id);
 
         if (!user) {
             throw new NotFoundException('Данный пользователь не был найден');
@@ -81,9 +81,10 @@ export class UsersService {
     }
 
     async getOneUserByChatId (chatId: string): Promise<UserAnswerDTO> {
-        const user = await this.prisma.users.findUnique({ 
+        const user = await this.prisma.users.findFirst({ 
             where: { 
-                tgChatId: chatId
+                tgChatId: chatId,
+                deletedAt: null
             },
             select: {
                 id: true,
@@ -110,6 +111,7 @@ export class UsersService {
 
         const user = await this.prisma.users.findFirst({ 
             where: { 
+                deletedAt: null,
                 tgUserName: {
                     equals: normalizedUsername,
                     mode: "insensitive"
@@ -126,7 +128,9 @@ export class UsersService {
     }
 
     async getAllUsersByFilter (paginate: PaginateDTO, filters: FiltersDTO) {
-        const whereClause = {};
+        const whereClause: Record<string, unknown> = {
+            deletedAt: null
+        };
         let order = {};
 
         const page = paginate?.page ?? 1;
@@ -159,11 +163,7 @@ export class UsersService {
     }
 
     async updateUser (id: string, data: UpdateUserDTO): Promise<UserAnswerDTO> {
-        const userExist = await this.prisma.users.findUnique({ 
-            where: { 
-                id
-            } 
-        });
+        const userExist = await this.getActiveUserById(id);
 
         if (!userExist) {
             throw new NotFoundException('Данный пользователь не был найден');

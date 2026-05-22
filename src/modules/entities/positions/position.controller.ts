@@ -73,7 +73,7 @@ export class PositionController {
     }
 
     @Get(":id")
-    @Auth()
+    //@Auth()
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить должность по id" })
     @ApiParam({ name: "id", example: "550e8400-e29b-41d4-a716-446655440000" })

@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 import { CreateEventDTO, EventAnswerDTO, UpdateEventDTO } from "./dto/events.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
-import { Prisma } from "prisma/generated/browser";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
 import { eventAnswerInclude } from "./types/event.type";
 import { NotificationService } from "../notificatations/notification.service";
@@ -59,6 +59,36 @@ export class EventService {
 
         if (!updatedEvent) {
             throw new InternalServerErrorException('Не получилось обновить данную кабинку');
+        }
+
+        return updatedEvent;
+    }
+
+    async updateEventCounter (id: string): Promise<EventAnswerDTO> {
+        const eventExist = await this.prisma.events.findUnique({
+            where: {
+                id
+            }
+        });
+
+        if (!eventExist) {
+            throw new NotFoundException('Не получилось найти данное событие');
+        }
+
+        let views = eventExist.views;
+        views += 1;
+
+        const updatedEvent = await this.prisma.events.update({
+            where: {
+                id
+            },
+            data: {
+                views
+            }
+        }) as EventAnswerDTO;
+
+        if (!updatedEvent) {
+            throw new InternalServerErrorException('Не получилось обновить счетчик просмотров события');
         }
 
         return updatedEvent;

@@ -1,8 +1,9 @@
-import { Body, Controller, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
 import { EventRegistrationsService } from "./event_registrations.service";
 import { ChangeEventRegistrationStatusDTO, CreateEventRegistrationDTO, EventRegistrationAnswerDTO } from "./dto/event_registration.dto";
+import { EventRegistrationStatus } from "@prisma/client";
 
 @ApiTags('Event registrations')
 @Controller('event-registration')
@@ -53,6 +54,15 @@ export class EventRegistrationsController {
     ): Promise<EventRegistrationAnswerDTO> {
         const changed = await this.eventRegistrationService.cancelRegistrationForUserToEvent(id);
         return changed;
+    }
+
+    @Get()
+    @ApiOperation({ summary: "Получить все регистрации на событие по статусу" })
+    @ApiParam({ name: "status", example: "APPROVED" })
+    @ApiOkResponse({ type: EventRegistrationAnswerDTO, isArray: true })
+    private async getAllByStatus (@Param() status: EventRegistrationStatus): Promise<EventRegistrationAnswerDTO[]> {
+        const registrations = await this.eventRegistrationService.getAllRegistrationsForEvenByFilter(status);
+        return registrations;
     }
 }
 

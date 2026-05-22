@@ -13,8 +13,9 @@ x-app-environment: &app-environment
   JWT_ACCESS_SECRET_KEY: skolkovo_access_qwerty_123455_hgsdfjh8rw234d1a4s1a4j1987
   JWT_REFRESH_SECRET_KEY: skolkovo_refresh_qwerty_123455_8793405ds1324h8ff657f45f
   TG_AUTH_SECRET_KEY: 34dfgB8dK98bdr34dGsfvrtfhj768576ndgfdg&Vp&7ccfughurisechner
-  TG_BOT_API_BASE_URL: https://api-bot.skolkovo.ru/server-api/v1
+  TG_BOT_API_BASE_URL: http://138.249.7.93:3001
   TG_BOT_API_TOKEN: jhsdfgkfdsjgfdsigfsdiogsdffgdt45.unjkghfsd8432tnjdksfhg89345w12sdlkfhasd.uir8916b7tubys7ehjasdhjgafd
+  SERVER_API_TOKEN: 8dfjkhsdf89s7dfh98sdf7h98s7dfh98sdf798sdfh987sdfh987sdfh987sdfh
 
 services:
   db:

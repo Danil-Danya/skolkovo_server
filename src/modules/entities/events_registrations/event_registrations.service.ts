@@ -104,4 +104,22 @@ export class EventRegistrationsService {
 
         return changedRegistrationToEvent;
     }
+
+    async getAllRegistrationsForEvenByFilter (status: EventRegistrationStatus): Promise<EventRegistrationAnswerDTO[]> {
+        const eventRegistrations = await this.prisma.event_registrations.findMany({
+            where: {
+                status: status as EventRegistrationStatus
+            },
+            include: {
+                event: true,
+                user: true
+            }
+        });
+
+        if (!eventRegistrations) {
+            throw new NotFoundException('Не получилось найти записи на события');
+        }
+
+        return eventRegistrations;
+    }
 }

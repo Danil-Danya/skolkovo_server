@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Headers, Param, Post, Put, UnauthorizedException } from "@nestjs/common";
 import { FollowersService } from "./follower.service";
-import { CreateFollowerDTO, FollowerAnswerDTO } from "./dto/follower.dto";
+import { CreateFollowerDTO, FollowerAnswerDTO, FollowerBotDecisionDTO } from "./dto/follower.dto";
 import { DeletedMessageDTO } from "src/core/dto/global.dto";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
 import { ApiBasicAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -41,5 +41,27 @@ export class FollowersController {
     ): Promise<FollowerAnswerDTO> {
         const updatedFollower = await this.followersService.updateStatusFollower(id, status);
         return updatedFollower;
+    }
+
+    @Post("bot-answer")
+    @ApiOperation({ summary: "Ответить на запрос подписки из Telegram-бота" })
+    @ApiOkResponse({ type: FollowerAnswerDTO })
+    async answerFollowerFromBot (
+        @Headers("authorization") authorization: string | undefined,
+        @Body() data: FollowerBotDecisionDTO
+    ): Promise<FollowerAnswerDTO> {
+        this.validateBotToken(authorization);
+
+        const follower = await this.followersService.answerFollowerRequest(data.id, data.status);
+        return follower;
+    }
+
+    private validateBotToken (authorization?: string) {
+        const token = authorization?.replace(/^Bearer\s+/i, "").trim();
+        const expectedToken = process.env.SERVER_API_TOKEN;
+
+        if (!expectedToken || token !== expectedToken) {
+            throw new UnauthorizedException("Недостаточно прав для bot integration");
+        }
     }
 }

@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { PrismaService } from "src/database/prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 import { CreateNewsDTO, NewsAnswerDTO, UpdateNewsDTO } from "./dto/news.dto";
-import { Prisma } from "prisma/generated/browser";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
 import { NotificationService } from "../notificatations/notification.service";
 

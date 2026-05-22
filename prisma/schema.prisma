@@ -110,10 +110,10 @@ model user_roles {
 
 model news {
   id           String @id @default(uuid()) @map("id")
-  authorId     String @map("author_id")          
+  authorId     String? @map("author_id")          
   categoryId   String? @map("category_id")
 
-  author       users  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  author       users?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
   category     news_categories? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   title        String @map("title")
@@ -132,8 +132,8 @@ model news {
 model events {
   id           String @id @default(uuid()) @map("id")
 
-  authorId     String @map("author_id")  
-  author       users  @relation("EventAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId     String? @map("author_id")  
+  author       users?  @relation("EventAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   locationId   String @map("location_id")
   location     locations @relation(fields: [locationId], references: [id], onDelete: Restrict)
@@ -282,6 +282,8 @@ model notifications {
 
   title       String @map("title")
   text        String @map("text")
+  
+  actionLinks Json?   @map("action_links")
 
   reads       read_notifications[]
 

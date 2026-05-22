@@ -16,6 +16,28 @@ const parseJsonString = (value: unknown): unknown => {
     }
 }
 
+const parseNullableUuid = (value: unknown): unknown => {
+    if (value === undefined || value === null) {
+        return value;
+    }
+
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue.length) {
+        return null;
+    }
+
+    if (normalizedValue.toLowerCase() === "null") {
+        return null;
+    }
+
+    return normalizedValue;
+}
+
 const parseNewsContent = (value: unknown): unknown => {
     const parsedValue = parseJsonString(value);
 
@@ -117,6 +139,16 @@ export class CreateNewsDTO {
     @IsUUID("4")
     authorId: string;
 
+    @ApiPropertyOptional({
+        example: "550e8400-e29b-41d4-a716-446655440000",
+        description: "News category id",
+        nullable: true
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseNullableUuid(value), { toClassOnly: true })
+    @IsUUID("4")
+    categoryId?: string | null;
+
     @ApiProperty({
         example: "News title",
         description: "News title"
@@ -185,6 +217,16 @@ export class UpdateNewsDTO {
     authorId?: string;
 
     @ApiPropertyOptional({
+        example: "550e8400-e29b-41d4-a716-446655440000",
+        description: "News category id",
+        nullable: true
+    })
+    @IsOptional()
+    @Transform(({ value }) => parseNullableUuid(value), { toClassOnly: true })
+    @IsUUID("4")
+    categoryId?: string | null;
+
+    @ApiPropertyOptional({
         example: "Updated news title",
         description: "News title"
     })
@@ -248,8 +290,18 @@ export class NewsAnswerDTO {
         example: "550e8400-e29b-41d4-a716-446655440000",
         description: "News author id"
     })
+    @IsOptional()
     @IsUUID("4")
-    authorId: string;
+    authorId?: string | null;
+
+    @ApiPropertyOptional({
+        example: "550e8400-e29b-41d4-a716-446655440000",
+        description: "News category id",
+        nullable: true
+    })
+    @IsOptional()
+    @IsUUID("4")
+    categoryId?: string | null;
 
     @ApiProperty({
         example: "News title",
@@ -311,7 +363,8 @@ export class NewsAnswerDTO {
 
 export class NewsDTO {
     id: string;
-    authorId: string;
+    authorId?: string | null;
+    categoryId?: string | null;
     title: string;
     previewPath: string;
     content: NewsContentDTO[];

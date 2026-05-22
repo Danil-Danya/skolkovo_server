@@ -305,8 +305,9 @@ export class EventAnswerDTO {
         example: "550e8400-e29b-41d4-a716-446655440000",
         description: "ID автора мероприятия"
     })
+    @IsOptional()
     @IsUUID("4")
-    authorId: string;
+    authorId?: string | null;
 
     @ApiProperty({
         example: "550e8400-e29b-41d4-a716-446655440000",
@@ -417,7 +418,7 @@ export class EventAnswerDTO {
 
 export class EventDTO {
     id: string;
-    authorId: string;
+    authorId?: string | null;
     locationId: string;
     title: string;
     previewPath?: string | null;
