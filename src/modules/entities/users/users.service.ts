@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma/prisma.service";
+import { UserRolesService } from "../roles/user_roles.service";
 import { CreateUserDTO, UpdateUserDTO, UserAnswerDTO } from "./dto/users.dto";
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { findAndPaginate } from "src/core/utils/model_metadata.util";
@@ -9,7 +10,10 @@ import { USER_SELECT } from "./types/user.types";
 
 @Injectable()
 export class UsersService {
-    constructor (private prisma: PrismaService) {}
+    constructor (
+        private prisma: PrismaService,
+        private userRolesService: UserRolesService
+    ) {}
 
     private async getActiveUserById (id: string) {
         return await this.prisma.users.findFirst({
@@ -40,11 +44,17 @@ export class UsersService {
             data.password = hashedPassword;
         }
 
-        const createdUser = await this.prisma.users.create({
-            data: {
-                ...data,
-                password: data.password ?? ''
-            }
+        const createdUser = await this.prisma.$transaction(async (tx) => {
+            const createdUser = await tx.users.create({
+                data: {
+                    ...data,
+                    password: data.password ?? ''
+                }
+            });
+
+            await this.userRolesService.ensureUserDefaultRole(createdUser.id, tx);
+
+            return createdUser;
         });
         if (!createdUser) {
             throw new InternalServerErrorException('Ошибка сервера. Не получилось создать пользователя');

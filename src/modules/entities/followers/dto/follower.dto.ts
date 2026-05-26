@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsEnum, IsIn, IsUUID } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsDate, IsEnum, IsIn, IsOptional, IsUUID } from "class-validator";
 import { Type } from "class-transformer";
 
 export enum UserFollowStatus {
@@ -9,14 +9,15 @@ export enum UserFollowStatus {
 }
 
 export class CreateFollowerDTO {
-    @ApiProperty({
+    @ApiPropertyOptional({
         example: "550e8400-e29b-41d4-a716-446655440000",
-        description: "ID пользователя, который подписывается"
+        description: "ID пользователя, который подписывается. Если запрос авторизован, берется из JWT токена"
     })
+    @IsOptional()
     @IsUUID("4", {
         message: "ID подписчика должен быть корректным UUID"
     })
-    followerId: string;
+    followerId?: string;
 
     @ApiProperty({
         example: "550e8400-e29b-41d4-a716-446655440001",

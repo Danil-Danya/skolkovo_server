@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiPa
 import { UploadFile } from "src/core/decorators/upload_file.decorator";
 import type { UploadedStaticFile } from "src/core/types/files.type";
 import { CompanyService } from "./company.service";
+
 import {
     CompanyAnswerDTO,
     CompanyDTO,
@@ -11,6 +12,7 @@ import {
     UpdateCompanyDTO,
     UpdateCompanyWithPreviewDTO
 } from "./dto/company.dto";
+
 import { DeletedMessageDTO, FiltersDTO, PaginateDTO, QueryDTO } from "src/core/dto/global.dto";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
 

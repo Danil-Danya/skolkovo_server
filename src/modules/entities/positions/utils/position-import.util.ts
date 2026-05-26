@@ -30,13 +30,13 @@ export const normalizePositionImportName = (value: string): string => {
 
 export const ensurePositionImportFile = (file?: UploadedStaticFile): UploadedStaticFile => {
     if (!file) {
-        throw new BadRequestException("Excel file is required");
+        throw new BadRequestException("Excel-файл обязателен");
     }
 
     const fileExtension = extname(file.originalname).toLowerCase();
 
     if (!supportedExcelExtensions.has(fileExtension)) {
-        throw new BadRequestException("Only .xls and .xlsx files are supported");
+        throw new BadRequestException("Поддерживаются только файлы .xls и .xlsx");
     }
 
     return file;
@@ -49,7 +49,7 @@ const readPositionImportWorkbook = (file: UploadedStaticFile): XLSX.WorkBook => 
         });
     }
     catch {
-        throw new BadRequestException("Could not read the Excel file");
+        throw new BadRequestException("Не удалось прочитать Excel-файл");
     }
 }
 
@@ -92,7 +92,7 @@ export const parsePositionImportFile = (
     const workbook = readPositionImportWorkbook(file);
 
     if (!workbook.SheetNames.length) {
-        throw new BadRequestException("Excel file does not contain any sheets");
+        throw new BadRequestException("Excel-файл не содержит листов");
     }
 
     const skipFirstRow = options.skipFirstRow ?? false;
@@ -102,7 +102,7 @@ export const parsePositionImportFile = (
     });
 
     if (!parsedRows.length) {
-        throw new BadRequestException("Excel file does not contain any rows with data");
+        throw new BadRequestException("Excel-файл не содержит строк с данными");
     }
 
     return parsedRows;
@@ -131,24 +131,24 @@ export const buildPositionImportPlan = (
 
     for (const parsedRow of parsedRows) {
         if (!parsedRow.name) {
-            skippedRows.push(buildSkippedRow(parsedRow, "Position name is required", false));
+            skippedRows.push(buildSkippedRow(parsedRow, "Название должности обязательно", false));
             continue;
         }
 
         if (!parsedRow.description) {
-            skippedRows.push(buildSkippedRow(parsedRow, "Position description is required"));
+            skippedRows.push(buildSkippedRow(parsedRow, "Описание должности обязательно"));
             continue;
         }
 
         const normalizedName = normalizePositionImportName(parsedRow.name);
 
         if (existingNames.has(normalizedName)) {
-            skippedRows.push(buildSkippedRow(parsedRow, "Position with the same name already exists"));
+            skippedRows.push(buildSkippedRow(parsedRow, "Должность с таким названием уже существует"));
             continue;
         }
 
         if (importedNames.has(normalizedName)) {
-            skippedRows.push(buildSkippedRow(parsedRow, "Duplicate position name in the uploaded file"));
+            skippedRows.push(buildSkippedRow(parsedRow, "Дублирующееся название должности в загруженном файле"));
             continue;
         }
 

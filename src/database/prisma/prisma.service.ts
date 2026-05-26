@@ -6,7 +6,7 @@ const getRequiredEnv = (name: string): string => {
     const value = process.env[name];
 
     if (typeof value !== "string" || value.length === 0) {
-        throw new Error(`Missing required environment variable: ${name}`);
+        throw new Error(`Обязательная переменная окружения отсутствует: ${name}`);
     }
 
     return value;
@@ -16,12 +16,12 @@ const getDatabaseConfig = () => {
     const port = Number(getRequiredEnv("DB_PORT"));
 
     if (Number.isNaN(port)) {
-        throw new Error("DB_PORT must be a valid number");
+        throw new Error("DB_PORT должен быть числом");
     }
 
     return {
-        host: getRequiredEnv("DB_HOST"),
         port,
+        host: getRequiredEnv("DB_HOST"),
         user: getRequiredEnv("DB_SERVERNAME"),
         password: getRequiredEnv("DB_PASSWORD"),
         database: getRequiredEnv("DB_NAME")

@@ -16,6 +16,7 @@ import { NotificationModule } from './modules/entities/notificatations/notificat
 import { CompanyCategoriesModule } from './modules/entities/company_categories/company_categories.module';
 import { FollowersModule } from './modules/entities/followers/follower.module';
 import { NewsCategoriesModule } from './modules/entities/news_categories/news_categories.module';
+import { RoleModule } from './modules/entities/roles/role.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { NewsCategoriesModule } from './modules/entities/news_categories/news_ca
         PrismaModule,
         AuthModule,
         UserModule,
+        RoleModule,
         ProfileModule,
         FollowersModule,
         NewsCategoriesModule,

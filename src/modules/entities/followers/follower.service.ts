@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { CreateFollowerDTO, FollowerAnswerDTO, UserFollowStatus } from "./dto/follower.dto";
-import { DeletedMessageDTO } from "src/core/dto/global.dto";
+import { DeletedMessageDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { NotificationService } from "../notificatations/notification.service";
 import { NotificationActionType } from "../notificatations/dto/notification.dto";
 import { createFollowerRequestNotification } from "../notificatations/integrations/bot/query_bot.notification";
+import { findAndPaginate } from "src/core/utils/model_metadata.util";
 
 @Injectable()
 export class FollowersService {
@@ -23,7 +24,8 @@ export class FollowersService {
         const fullName = [
             user.profile?.firstName?.trim(),
             user.profile?.lastName?.trim()
-        ].filter(Boolean).join(" ");
+        ]
+        .filter(Boolean).join(" ");
 
         if (fullName.length > 0) {
             return fullName;
@@ -57,7 +59,7 @@ export class FollowersService {
         });
     }
 
-    async createFollower (data: CreateFollowerDTO): Promise<FollowerAnswerDTO> {
+    async createFollower (data: CreateFollowerDTO & { followerId: string }): Promise<FollowerAnswerDTO> {
         if (data.followerId === data.followingId) {
             throw new BadRequestException("Нельзя подписаться на самого себя");
         }
@@ -245,5 +247,31 @@ export class FollowersService {
         });
 
         return updatedFollower as FollowerAnswerDTO;
+    }
+
+    async getUserFollowers (userId: string, paginate: PaginateDTO) {
+        const followers = await findAndPaginate(this.prisma.followers, {
+            limit: paginate.limit,
+            page: paginate.page,
+            where: {
+                followingId: userId,
+                status: 'FOLLOW'
+            },
+        })
+
+        return followers;
+    }
+
+    async getUserFollowings (userId: string, paginate: PaginateDTO) {
+        const followings = await findAndPaginate(this.prisma.followers, {
+            limit: paginate.limit,
+            page: paginate.page,
+            where: {
+                followerId: userId,
+                status: 'FOLLOW'
+            },
+        })
+
+        return followings;
     }
 }

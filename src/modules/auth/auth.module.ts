@@ -11,6 +11,8 @@ import { JWTStrategyAccess } from "./jwt/jwt_access.strategy";
 import { JWTStrategyRefresh } from "./jwt/jwt_refresh.strategy";
 import { NotificationModule } from "../entities/notificatations/notification.module";
 import { NotificationService } from "../entities/notificatations/notification.service";
+import { RoleModule } from "../entities/roles/role.module";
+import { TelegramAccountService } from "./services/telegram-account.service";
 
 @Module({
     controllers: [AuthController],
@@ -21,7 +23,8 @@ import { NotificationService } from "../entities/notificatations/notification.se
         RolesGuard,
         JWTStrategyAccess,
         JWTStrategyRefresh,
-        NotificationService
+        NotificationService,
+        TelegramAccountService
     ],
     exports: [
         AuthService,
@@ -31,6 +34,7 @@ import { NotificationService } from "../entities/notificatations/notification.se
     ],
     imports: [
         UserModule,
+        RoleModule,
         PassportModule,
         NotificationModule,
         JwtModule.register({})

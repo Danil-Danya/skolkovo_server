@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Headers, Param, Post, Put, UnauthorizedException } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query, UnauthorizedException } from "@nestjs/common";
 import { FollowersService } from "./follower.service";
 import { CreateFollowerDTO, FollowerAnswerDTO, FollowerBotDecisionDTO } from "./dto/follower.dto";
-import { DeletedMessageDTO } from "src/core/dto/global.dto";
+import { DeletedMessageDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
+import { CurrentUser } from "src/modules/auth/decorators/current_user.decorator";
 import { ApiBasicAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 @ApiTags('Followers')
@@ -10,17 +11,23 @@ import { ApiBasicAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swag
 export class FollowersController {
     constructor (private followersService: FollowersService) {}
 
-    @Post()
+    @Post('/follow')
     @Auth()
     @ApiOperation({ summary: "Создать нового подписчика" })
     @ApiBasicAuth()
     @ApiOkResponse({ type: FollowerAnswerDTO })
-    async createFollower (@Body() data: CreateFollowerDTO): Promise<FollowerAnswerDTO> {
-        const follower = await this.followersService.createFollower(data);
+    async createFollower (
+        @CurrentUser() user: { id: string },
+        @Body() data: CreateFollowerDTO
+    ): Promise<FollowerAnswerDTO> {
+        const follower = await this.followersService.createFollower({
+            ...data,
+            followerId: user.id
+        });
         return follower;
     }
 
-    @Delete(':id')
+    @Delete('/unfollow/:id')
     @Auth()
     @ApiOperation({ summary: "Удалить подписчика" })
     @ApiBasicAuth()
@@ -63,5 +70,45 @@ export class FollowersController {
         if (!expectedToken || token !== expectedToken) {
             throw new UnauthorizedException("Недостаточно прав для bot integration");
         }
+    }
+
+    @Get('/user/:userId/followers')
+    @Auth()
+    @ApiOperation({ summary: "Получить список подписчиков пользователя" })
+    @ApiBasicAuth()
+    @ApiOkResponse({ type: [FollowerAnswerDTO] })
+    async getUserFollowers (@Param('userId') userId: string, @Query() paginate: PaginateDTO) {
+        const followers = await this.followersService.getUserFollowers(userId, paginate);
+        return followers;
+    }
+
+    @Get('/user/:userId/followings')
+    @Auth()
+    @ApiOperation({ summary: "Получить список подписок пользователя" })
+    @ApiBasicAuth()
+    @ApiOkResponse({ type: [FollowerAnswerDTO] })
+    async getUserFollowings (@Param('userId') userId: string, @Query() paginate: PaginateDTO) {
+        const followings = await this.followersService.getUserFollowings(userId, paginate);
+        return followings;
+    }
+
+    @Get('/my/followers')
+    @Auth()
+    @ApiOperation({ summary: "Получить список ваших подписчиков" })
+    @ApiBasicAuth()
+    @ApiOkResponse({ type: [FollowerAnswerDTO] })
+    async getMyFollowers (@CurrentUser() user: { id: string }, @Query() paginate: PaginateDTO) {
+        const followers = await this.followersService.getUserFollowers(user.id, paginate);
+        return followers;
+    }
+
+    @Get('/my/followings')
+    @Auth()
+    @ApiOperation({ summary: "Получить список ваших подписок" })
+    @ApiBasicAuth()
+    @ApiOkResponse({ type: [FollowerAnswerDTO] })
+    async getMyFollowings (@CurrentUser() user: { id: string }, @Query() paginate: PaginateDTO) {
+        const followings = await this.followersService.getUserFollowings(user.id, paginate);
+        return followings;
     }
 }

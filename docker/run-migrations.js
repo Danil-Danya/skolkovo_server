@@ -11,9 +11,9 @@ const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const runPrismaMigrateDeploy = () =>
+const runPrismaCommand = (args) =>
   new Promise((resolve, reject) => {
-    const child = spawn(npxCommand, ["prisma", "migrate", "deploy"], {
+    const child = spawn(npxCommand, ["prisma", ...args], {
       env: process.env,
       stdio: "inherit",
     });
@@ -26,7 +26,7 @@ const runPrismaMigrateDeploy = () =>
       }
 
       const details = signal ? `signal ${signal}` : `code ${code ?? "unknown"}`;
-      reject(new Error(`prisma migrate deploy exited with ${details}`));
+      reject(new Error(`prisma ${args.join(" ")} exited with ${details}`));
     });
   });
 
@@ -34,8 +34,12 @@ async function main() {
   for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
     try {
       console.log(`[migrate] Running Prisma migrations (${attempt}/${maxRetries})`);
-      await runPrismaMigrateDeploy();
+      await runPrismaCommand(["migrate", "deploy"]);
       console.log("[migrate] Prisma migrations are up to date");
+
+      console.log("[migrate] Running Prisma seed");
+      await runPrismaCommand(["db", "seed"]);
+      console.log("[migrate] Prisma seed completed");
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
