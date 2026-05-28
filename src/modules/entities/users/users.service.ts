@@ -137,7 +137,7 @@ export class UsersService {
         return user;
     }
 
-    async getAllUsersByFilter (paginate: PaginateDTO, filters: FiltersDTO) {
+    async getAllUsersByFilter (paginate: PaginateDTO, filters: FiltersDTO, name?: string) {
         const whereClause: Record<string, unknown> = {
             deletedAt: null
         };
@@ -154,6 +154,27 @@ export class UsersService {
             whereClause[filters.searchField] = {
                 contains: filters.search,
                 mode: 'insensitive'
+            };
+        }
+
+        if (name?.trim()) {
+            whereClause.profile = {
+                is: {
+                    OR: [
+                        {
+                            firstName: {
+                                contains: name.trim(),
+                                mode: "insensitive"
+                            }
+                        },
+                        {
+                            lastName: {
+                                contains: name.trim(),
+                                mode: "insensitive"
+                            }
+                        }
+                    ]
+                }
             };
         }
 

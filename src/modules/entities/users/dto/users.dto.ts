@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsDate, IsOptional, IsString, IsUUID } from "class-validator";
+import { QueryDTO } from "src/core/dto/global.dto";
 
 export class CreateUserDTO {
     @ApiPropertyOptional({
@@ -114,4 +115,14 @@ export class UserDTO {
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date | null;
+}
+
+export class UserQueryDTO extends QueryDTO {
+    @ApiPropertyOptional({
+        example: "Иван",
+        description: "Поиск пользователя по имени или фамилии профиля"
+    })
+    @IsOptional()
+    @IsString()
+    name?: string;
 }

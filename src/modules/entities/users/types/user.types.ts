@@ -17,6 +17,7 @@ export const USER_SELECT = Prisma.validator<Prisma.usersSelect>()({
             avatarPath: true,
             biography: true,
             gender: true,
+            education: true,
             region: true,
             tgUser: true,
             phone: true,

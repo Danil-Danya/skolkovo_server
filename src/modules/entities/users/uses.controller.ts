@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
-import { CreateUserDTO, UpdateUserDTO, UserAnswerDTO, UserDTO } from "./dto/users.dto";
+import { CreateUserDTO, UpdateUserDTO, UserAnswerDTO, UserDTO, UserQueryDTO } from "./dto/users.dto";
 import { UsersService } from "./users.service";
-import { DeletedMessageDTO, FiltersDTO, PaginateDTO, QueryDTO } from "src/core/dto/global.dto";
+import { DeletedMessageDTO, FiltersDTO, PaginateDTO } from "src/core/dto/global.dto";
 import { ApiOkResponse, ApiOperation, ApiTags, ApiParam, ApiBearerAuth } from "@nestjs/swagger";
 import { Auth } from "src/modules/auth/decorators/auth.decorators";
 
@@ -36,7 +36,7 @@ export class UsersController {
     @ApiBearerAuth()
     @ApiOperation({ summary: "Получить список пользователей" })
     @ApiOkResponse({ type: UserDTO, isArray: true })
-    private async getUserByFilter (@Query() query: QueryDTO) {
+    private async getUserByFilter (@Query() query: UserQueryDTO) {
         const filters: FiltersDTO = {
             where: query.where,
             whereField: query.whereField,
@@ -50,7 +50,7 @@ export class UsersController {
             page: query.page,
             limit: query.limit
         };
-        const users = await this.usersService.getAllUsersByFilter(paginate, filters);
+        const users = await this.usersService.getAllUsersByFilter(paginate, filters, query.name);
         return users;
     }
 

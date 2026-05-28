@@ -121,6 +121,11 @@ export class TelegramBotRegisterDTO {
     })
     @IsString()
     phone: string;
+
+    @ApiPropertyOptional({ example: "Высшее", description: "Образование пользователя" })
+    @IsOptional()
+    @IsString()
+    education?: string;
 }
 
 export class TelegramBotRegisterAnswerDTO {

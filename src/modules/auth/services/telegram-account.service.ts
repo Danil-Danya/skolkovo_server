@@ -79,6 +79,7 @@ export class TelegramAccountService {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     phone: data.phone,
+                    education: data.education,
                     tgUser: normalizedUsername ?? undefined
                 }
             });
@@ -93,6 +94,7 @@ export class TelegramAccountService {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     phone: data.phone,
+                    education: data.education,
                     tgUser: normalizedUsername ?? profile.tgUser
                 }
             });
